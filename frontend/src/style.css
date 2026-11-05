@@ -16,9 +16,24 @@
 .run-model-settings{margin-top:12px}.run-model-settings summary{overflow-wrap:anywhere}.run-model-settings summary span{display:block;font-weight:400;color:#62716b;font-size:12px;margin-top:5px}
 input[type=radio]{width:auto;display:inline-block;margin-right:8px}
 .run-policy .field-help{margin-left:25px}
-.run-judge-note{display:flex;flex-wrap:wrap;gap:8px 16px;padding:16px;border:1px solid #dce4df;border-radius:10px}.run-judge-note small{flex-basis:100%;color:#62716b}
+.run-inspector-note{display:flex;flex-wrap:wrap;gap:8px 16px;padding:16px;border:1px solid #dce4df;border-radius:10px}.run-inspector-note small{flex-basis:100%;color:#62716b}
 .run-advanced{margin:20px 0}.run-advanced>button{margin:8px 8px 0 0}
 .run-footer{border-top:1px solid #dce4df;padding-top:18px;display:flex;align-items:center;justify-content:space-between;gap:20px}.run-footer span,.run-footer small{display:block;color:#62716b;margin-top:5px}.run-footer small{font-size:12px}
 .run-error{color:#a32d30;background:#fff0ef;padding:10px;border-radius:6px;overflow-wrap:anywhere}
 @media(max-width:650px){.model-options{grid-template-columns:1fr}.run-footer{align-items:stretch;flex-direction:column}.run-context{padding:12px}}
 .stage-progress{margin:14px 0}.stage-progress>div{display:flex;justify-content:space-between;gap:20px}.stage-progress progress{width:100%;height:10px;accent-color:#34795b}.stage-progress small{color:#62716b}.progress-failed{color:#a32d30}.run-progress>p{overflow-wrap:anywhere}.run-progress.compact{min-width:240px;max-width:380px;font-size:12px}.run-progress.compact p{margin:8px 0}
+
+button.danger { background: #a83232; border-color: #a83232; color: white; }
+button.danger:hover:not(:disabled) { background: #852626; }
+.outcome-stack { display: flex; height: 20px; border-radius: 4px; overflow: hidden; background: #b9bdc2; }
+.outcome-stack span { display: block; height: 100%; }
+.eval-card.selected { border-color: #527b42; box-shadow: 0 0 0 2px #527b4220; }
+.eval-card .card-open { padding: 0; text-align: left; font-size: inherit; font-weight: inherit; }
+.eval-card > .check { margin-top: 0; }
+.model-card h3 { overflow-wrap: anywhere; }
+.model-card-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+.model-card-facts strong { display: block; font-size: 20px; }
+.model-card-facts small { display: block; color: #6b7c65; margin-top: 5px; }
+.model-card > button { margin-right: 8px; }
+.execution-running { color: #2b6c3a; font-weight: 600; }
+.execution-waiting { color: #7b795f; }

@@ -8,7 +8,7 @@ from sqlalchemy import select
 from .core import identity
 from .db import Experiment, Proposal, Run, Revision, Item, Job
 from .schemas import Definition, ModelSpec, RunRequest
-from .service import require, uid, render, materialize
+from .service import require, uid, render, materialize, physical_model
 
 
 class Arm(BaseModel):
@@ -112,7 +112,7 @@ def validate_effective_change(plan, base_model, definition):
 def validate_proposal_plan(proposal, plan, base_model, definition):
     settings, _ = executable_arms(proposal)
     if settings.model != plan.model:
-        raise ValueError('Model must match the judge proposal')
+        raise ValueError('Model must match the inspector proposal')
     if settings.revision is not None and settings.revision != base_model.get('revision'):
         raise ValueError('Proposed model revision differs from the pinned baseline')
     if settings.dtype is not None and settings.dtype != base_model.get('dtype'):
@@ -134,7 +134,7 @@ def seed(service, proposal_id):
             model = settings.model
             base_model = next((m for m in baseline.config['models'] if m['name']==model), None)
             if base_model is None:raise ValueError('Proposed model is not in the baseline')
-            definition = require(s, Revision, baseline.revision_id).definition
+            definition = baseline.config.get('effective_definition') or require(s, Revision, baseline.revision_id).definition
             validate_proposal_plan(proposal.proposal, Plan(model=model,example_ids=baseline.manifest['ids'],arms=arms),base_model,definition)
         except ValueError as exc:
             blocked = True
@@ -142,7 +142,7 @@ def seed(service, proposal_id):
         return {'proposal': proposal.proposal, 'baseline_id':baseline.id, 'status':proposal.status,
             'models': baseline.config['models'], 'warnings':warnings, 'blocked':blocked,
             'plan':{'model':model,'example_ids':baseline.manifest['ids'], 'arms':arms},
-            'scope_note':'Defaults to all examples in the baseline run. Judge example_ids are evidence citations, not an executable sampling instruction. Review the scope against the proposed protocol.'}
+            'scope_note':'Defaults to all examples in the baseline run. Inspector example_ids are evidence citations, not an executable sampling instruction. Review the scope against the proposed protocol.'}
 
 
 def prepare(service, proposal_id, body):
@@ -158,10 +158,11 @@ def prepare(service, proposal_id, body):
         if base_model is None:
             raise ValueError('Select a model from the baseline run')
         old = require(s, Revision, baseline.revision_id)
-        validate_proposal_plan(proposal.proposal,plan,base_model,old.definition)
+        baseline_definition = baseline.config.get('effective_definition') or old.definition
+        validate_proposal_plan(proposal.proposal,plan,base_model,baseline_definition)
         previews = []
         for arm in plan.arms:
-            definition = copy.deepcopy(old.definition)
+            definition = copy.deepcopy(baseline_definition)
             if arm.prompt_template is not None: definition['prompt_template'] = arm.prompt_template
             definition = Definition.model_validate(definition).model_dump()
             model = ModelSpec.model_validate({**base_model,
@@ -173,11 +174,11 @@ def prepare(service, proposal_id, body):
             counts = Counter()
             for row in rows:
                 for repeat in range(baseline.config['repeats']):
-                    payload = {'model':model, 'messages':render(definition,row), 'repeat':repeat, 'fresh':None}
+                    payload = {'model':physical_model(model), 'messages':render(definition,row), 'repeat':repeat, 'fresh':None}
                     key = identity({'kind':'generation','payload':payload,'engine_version':'1'})
                     job = s.get(Job,key)
                     counts['reusable' if job and job.status=='succeeded' else 'pending_or_new'] += 1
-            previews.append({'name':arm.name,'model':model,'prompt_changed':definition['prompt_template']!=old.definition['prompt_template'],
+            previews.append({'name':arm.name,'model':model,'prompt_changed':definition['prompt_template']!=baseline_definition['prompt_template'],
                 'prompt_template':definition['prompt_template'],'examples':len(rows),'repeats':baseline.config['repeats'],
                 'reusable':counts['reusable'],'pending_or_new':counts['pending_or_new'],
                 'output_token_ceiling':len(rows)*baseline.config['repeats']*model['parameters'].get('max_tokens',64),
@@ -204,19 +205,23 @@ def approve(service, experiment_id):
         if proposal.status != 'pending': raise ValueError('Proposal was already reviewed')
         baseline = require(s, Run, record.baseline_id)
         old = require(s, Revision, baseline.revision_id)
+        baseline_definition = baseline.config.get('effective_definition') or old.definition
         plan = Plan.model_validate(record.plan)
         base_model = next(m for m in baseline.config['models'] if m['name']==plan.model)
-        validate_proposal_plan(proposal.proposal,plan,base_model,old.definition)
+        validate_proposal_plan(proposal.proposal,plan,base_model,baseline_definition)
         runs = {}
         for arm in record.preview['arms']:
             revision_id = old.id
             if arm['prompt_changed']:
-                definition = {**old.definition,'prompt_template':arm['prompt_template']}
-                new = Revision(id=uid(),evaluation_id=old.evaluation_id,parent_id=old.id,definition=definition)
-                s.add(new);s.flush();revision_id = new.id
-            req = RunRequest(revision_id=revision_id, models=[arm['model']], parent_id=baseline.id,
+                definition = {**baseline_definition,'prompt_template':arm['prompt_template']}
+                from .revisions import save_revision
+                new, _ = save_revision(s,old,definition)
+                s.flush();revision_id = new.id
+            req = RunRequest(revision_id=revision_id, analysis_overrides={k:baseline_definition[k] for k in ('scorer','metrics','heuristics','inspector','expected_format')}, models=[arm['model']], parent_id=baseline.id,
                 example_ids=record.plan['example_ids'], repeats=baseline.config['repeats'])
             runs[arm['name']] = service._create_run(s,req)['id']
+        from .db import ResultCollection
+        s.add(ResultCollection(id=uid(),name=proposal.proposal['title'],description='Approved matched-example experiment',run_ids=list(runs.values())))
         record.runs = runs
         record.status = 'approved';record.approved_at = time.time();proposal.status = 'approved'
         return describe(record)

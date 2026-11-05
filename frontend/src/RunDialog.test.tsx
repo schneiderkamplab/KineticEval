@@ -4,7 +4,7 @@ import RunDialog from './RunDialog'
 import {withDefaults} from './Evaluation'
 import {api} from './api'
 vi.mock('./api',async importOriginal=>({...await importOriginal<typeof import('./api')>(),api:vi.fn()}))
-it('queues a typed HF identifier as a local model without querying judge discovery',async()=>{
+it('queues a typed HF identifier as a local model without querying inspector discovery',async()=>{
  const definition=withDefaults({name:'QA',examples:[{id:'a',input:'Q',target:'A',subset:'test'}]})
  vi.mocked(api).mockResolvedValue({id:'new-run'})
  const started=vi.fn().mockResolvedValue(undefined)

@@ -31,8 +31,35 @@ def pin_model(model):
         model.artifact_hash = local_digest(model.local_path)
     else:
         from huggingface_hub import HfApi
-        model.revision = HfApi().model_info(model.name, revision=model.revision).sha
+        model.revision = HfApi().model_info(model.model_identifier or model.name, revision=model.revision).sha
     return model
+
+
+def resolve_source(spec):
+    if spec.get('local_path'):
+        return spec['local_path']
+    from huggingface_hub import snapshot_download
+    from huggingface_hub.errors import LocalEntryNotFoundError
+    try:
+        source = snapshot_download(spec['name'], revision=spec['revision'], local_files_only=True)
+        root = Path(source)
+        weights = list(root.glob('*.safetensors')) or list(root.glob('pytorch_model*.bin'))
+        indexes = list(root.glob('*.index.json'))
+        complete = bool(weights)
+        for index in indexes:
+            mapping = json.loads(index.read_text()).get('weight_map', {})
+            if mapping and not all((root / name).exists() for name in set(mapping.values())):
+                complete = False
+        if complete:
+            # A previous text-only loader may have cached weights/tokenizers but
+            # omitted processor metadata required by vLLM. Complete metadata
+            # from the same pinned revision without downloading weights again.
+            return snapshot_download(spec['name'], revision=spec['revision'],
+                allow_patterns=['*.json','*.model','*.tiktoken','*.txt','*.jinja','tokenizer*','vocab*','merges*'])
+    except LocalEntryNotFoundError:
+        pass
+    return snapshot_download(spec['name'], revision=spec['revision'],
+        allow_patterns=['*.json','*.safetensors','*.bin','*.model','*.tiktoken','*.txt','*.jinja','tokenizer*','vocab*','merges*'])
 
 
 def runtime_identity(spec):
@@ -54,13 +81,13 @@ def render_prompts(tokenizer, payloads, spec):
 
 
 class LocalModel:
-    def __init__(self, spec, device='cuda:0', memory_fraction=.20):
+    def __init__(self, spec, device='cuda:0', memory_fraction=.20, compile_model=True):
         import torch
         import transformers
         self.torch, self.spec, self.device = torch, spec, device
         if device.startswith('cuda'):
             torch.cuda.set_per_process_memory_fraction(memory_fraction, device)
-        source = spec.get('local_path') or spec['name']
+        source = resolve_source(spec)
         if spec.get('local_path') and local_digest(source) != spec['artifact_hash']:
             raise ValueError('Local model export changed since run creation')
         kwargs = {'revision': spec.get('revision')} if not spec.get('local_path') else {}
@@ -73,10 +100,12 @@ class LocalModel:
         model_cls = getattr(transformers, architecture)
         self.model = model_cls.from_pretrained(source, dtype=getattr(torch, spec.get('dtype', 'bfloat16')),
             attn_implementation='sdpa', **kwargs).to(device).eval()
+        if compile_model:
+            self.model.forward = torch.compile(self.model.forward, dynamic=True)
         self.is_prefix_lm = bool(getattr(config, 'prefix_lm', False))
         text_config = getattr(config, 'text_config', config)
         self.context_limit = min(spec.get('context_limit', 4096), getattr(text_config, 'max_position_embeddings', 4096))
-        self.runtime = {'torch': torch.__version__, 'transformers': transformers.__version__, 'device': device,
+        self.runtime = {'engine': 'transformers', 'compiled': compile_model, 'tensor_parallel_size': 1, 'torch': torch.__version__, 'transformers': transformers.__version__, 'device': device,
             'architecture': architecture, 'dtype': spec.get('dtype', 'bfloat16'), 'prefix_lm': self.is_prefix_lm,
             'revision': spec.get('revision'), 'artifact_hash': spec.get('artifact_hash'), 'memory_fraction': memory_fraction}
 

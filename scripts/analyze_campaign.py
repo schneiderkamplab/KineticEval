@@ -25,7 +25,7 @@ async def main():
                     .where(Item.run_id==run_id,Job.status.in_(['pending','running'])))
             if remaining: continue
             service.schedule(run_ids=[run_id])
-            for kind in ['scoring','diagnostic','metrics','investigation','judge','report']:
+            for kind in ['scoring','diagnostic','metrics','investigation','inspector','report']:
                 while True:
                     claims=db.claim_many(kind=kind,run_id=run_id,limit=32,lease_seconds=600)
                     if not claims: break

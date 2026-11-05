@@ -7,6 +7,10 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, Session
 from sqlalchemy import JSON, String, Float, Integer
 
 
+class InactiveClaim(Exception):
+    pass
+
+
 class Base(DeclarativeBase):
     pass
 
@@ -60,7 +64,7 @@ class Item(Base):
     generation_id: Mapped[str] = mapped_column(index=True)
     score_id: Mapped[str | None]
     diagnostic_id: Mapped[str | None]
-    judge_id: Mapped[str | None]
+    inspector_id: Mapped[str | None]
     reused: Mapped[bool] = mapped_column(default=False)
 
 
@@ -152,7 +156,7 @@ class Database:
         claims = self.claim_many(lease_seconds=lease_seconds)
         return claims[0] if claims else None
 
-    def claim_many(self, kind=None, model=None, limit=1, lease_seconds=300, run_id=None, backend=None, preferred_spec=None, kinds=None):
+    def claim_many(self, kind=None, model=None, limit=1, lease_seconds=300, run_id=None, backend=None, preferred_spec=None, kinds=None, runtime_id=None):
         from sqlalchemy import select
         now = time.time()
         with self.session(immediate=True) as s:
@@ -180,6 +184,9 @@ class Database:
                 from .local_hf import runtime_identity
                 specs = s.execute(query.with_only_columns(Job.payload['model'], func.min(Job.created))
                     .group_by(Job.payload['model']).order_by(func.min(Job.created))).all()
+                if runtime_id:
+                    from .core import identity
+                    specs = [(spec, created) for spec, created in specs if identity(runtime_identity(spec)) == runtime_id]
                 if not specs:
                     return []
                 chosen = next((spec for spec, _ in specs if preferred_spec is not None
@@ -197,6 +204,24 @@ class Database:
                 s.add(Attempt(id=token, job_id=job.id, started=now))
                 claims.append({'id': job.id, 'kind': job.kind, 'payload': job.payload, 'token': token})
             return claims
+
+    def require_active_claim(self, key, token):
+        from sqlalchemy import select
+        with self.session() as s:
+            active = s.scalar(select(Job.id).join(RunJob, RunJob.job_id == Job.id)
+                .join(Run, Run.id == RunJob.run_id).where(Job.id == key, Job.token == token,
+                Job.status == 'running', Job.lease > time.time(), Run.status == 'active').limit(1))
+            if active is None:
+                raise InactiveClaim('No active run authorizes this provider request')
+
+    def abandon_claim(self, key, token):
+        with self.session(immediate=True) as s:
+            job = s.get(Job, key)
+            if job and job.token == token and job.status == 'running':
+                attempt = s.get(Attempt, token)
+                if attempt:
+                    attempt.finished, attempt.error = time.time(), 'Canceled before provider request'
+                job.status, job.token, job.lease = 'pending', None, None
 
     def activity(self, claims, phase):
         with self.session(immediate=True) as s:
@@ -230,3 +255,30 @@ class Database:
                 job.result, job.error, job.lease = completion.get('result'), error, None
                 attempt = s.get(Attempt, completion['token'])
                 attempt.finished, attempt.error = time.time(), error
+
+
+class ModelConfiguration(Base):
+    __tablename__ = 'model_configurations'
+    id: Mapped[str] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    spec: Mapped[dict] = mapped_column(JSON)
+    created: Mapped[float] = mapped_column(default=time.time)
+    updated: Mapped[float] = mapped_column(default=time.time)
+
+
+class ResultCollection(Base):
+    __tablename__ = 'result_collections'
+    id: Mapped[str] = mapped_column(primary_key=True)
+    name: Mapped[str]
+    description: Mapped[str] = mapped_column(default='')
+    run_ids: Mapped[list] = mapped_column(JSON, default=list)
+    comparison: Mapped[dict] = mapped_column(JSON, default=dict)
+    launch_key: Mapped[str | None] = mapped_column(unique=True)
+    created: Mapped[float] = mapped_column(default=time.time)
+
+
+class MigrationRecord(Base):
+    __tablename__ = 'migration_records'
+    id: Mapped[str] = mapped_column(primary_key=True)
+    completed: Mapped[float] = mapped_column(default=time.time)
+    details: Mapped[dict] = mapped_column(JSON)

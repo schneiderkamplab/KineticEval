@@ -46,7 +46,7 @@ def test_inspect_mcq_postprocessing_preserved():
     assert asyncio.run(score_response({**payload, 'response': ''}))['value'] == 0
 
 
-def test_judge_structured_output_and_evidence_validation(monkeypatch):
+def test_inspector_structured_output_and_evidence_validation(monkeypatch):
     import json
     from kineticeval import providers
     async def response(self, model, messages, parameters):
@@ -57,7 +57,7 @@ def test_judge_structured_output_and_evidence_validation(monkeypatch):
     monkeypatch.setattr(providers.UCloud,'chat',response)
     payload={'config':{'provider':'ucloud','model':'model','max_tokens':1000},'evidence':{'response':'A'},'dimensions':['semantic_correct']}
     with pytest.raises(ValueError,match='evidence'):
-        asyncio.run(providers.judge(payload))
+        asyncio.run(providers.inspector(payload))
 
 
 def test_report_output_becomes_reviewable_proposals(tmp_path,monkeypatch):
@@ -66,16 +66,16 @@ def test_report_output_becomes_reviewable_proposals(tmp_path,monkeypatch):
     from kineticeval.service import Service
     from kineticeval.worker import Worker
     from kineticeval.fixtures import demo_definition
-    original=providers.judge
+    original=providers.inspector
     async def report(payload, report=False):
         result=await original(payload,report)
         if report:
             result['suggestions']=[{'kind':'prompt','title':'Clarify output','rationale':'Avoid hidden format expectations',
                 'patch':{'prompt_template':'{input}\n{choices}\nAnswer with only one letter.'},'example_ids':['capital']}]
         return result
-    monkeypatch.setattr(providers,'judge',report)
+    monkeypatch.setattr(providers,'inspector',report)
     s=Service(Database(tmp_path/'report.db'))
-    d=demo_definition();d['judge']={'enabled':True,'provider':'fake'}
+    d=demo_definition();d['inspector']={'enabled':True,'provider':'fake'}
     rev=s.create_evaluation(d)['revision_id']
     run=s.create_run({'revision_id':rev,'models':[{'name':'fixture','backend':'fake'}]})['id']
     asyncio.run(Worker(s.db).drain())
@@ -88,15 +88,15 @@ def test_report_output_becomes_reviewable_proposals(tmp_path,monkeypatch):
 
 
 @pytest.mark.skipif(__import__('os').environ.get('KINETICEVAL_LIVE_TESTS') != '1', reason='Live UCloud checks are opt-in')
-def test_live_ucloud_judge():
+def test_live_ucloud_inspector():
     import os
-    from kineticeval.providers import judge
-    from kineticeval.schemas import JudgeConfig
+    from kineticeval.providers import inspector
+    from kineticeval.schemas import InspectorConfig
     available=asyncio.run(UCloud().models())
-    model=os.environ.get('UCLOUD_JUDGE_MODEL')
-    assert model in available, 'Set UCLOUD_JUDGE_MODEL to an ID returned by /models'
-    config=JudgeConfig(enabled=True,model=model).model_dump()
-    result=asyncio.run(judge({'config':config,'dimensions':['semantic_correct'], 'evidence':{
+    model=os.environ.get('UCLOUD_INSPECTOR_MODEL')
+    assert model in available, 'Set UCLOUD_INSPECTOR_MODEL to an ID returned by /models'
+    config=InspectorConfig(enabled=True,model=model).model_dump()
+    result=asyncio.run(inspector({'config':config,'dimensions':['semantic_correct'], 'evidence':{
         'sample':{'input':'What is 2 + 2?','target':'4'}, 'messages':[{'role':'user','content':'What is 2 + 2?'}],
         'response':'The answer is 4.', 'score':{'value':0}, 'diagnostic':{'finding':{'semantic_correct':None}}}}))
     assert result['semantic_correct'] is True
@@ -114,7 +114,7 @@ def test_inspect_rescoring_does_not_reload_dataset(monkeypatch):
     assert metrics(definition.metrics[0].model_dump(),[result])['inspect_ai/mean']==1
 
 
-def test_judge_repairs_invalid_evidence_with_bounded_feedback(monkeypatch):
+def test_inspector_repairs_invalid_evidence_with_bounded_feedback(monkeypatch):
     import json
     from kineticeval import providers
     calls = []
@@ -125,7 +125,7 @@ def test_judge_repairs_invalid_evidence_with_bounded_feedback(monkeypatch):
     monkeypatch.setenv('UCLOUD_BASE_URL', 'https://fixture.invalid/v1')
     monkeypatch.setenv('UCLOUD_API_KEY', 'fixture-key')
     monkeypatch.setattr(providers.UCloud, 'chat', response)
-    result = asyncio.run(providers.judge({'config':{'provider':'ucloud','model':'model','max_tokens':1000},
+    result = asyncio.run(providers.inspector({'config':{'provider':'ucloud','model':'model','max_tokens':1000},
         'evidence':{'response':'A'},'dimensions':['semantic_correct']}))
     assert result['evidence'] == ['A']
     assert len(calls) == 2

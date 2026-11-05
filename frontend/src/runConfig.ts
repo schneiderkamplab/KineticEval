@@ -13,7 +13,7 @@ export function validateModels(models:Model[]):string|null{
  if(new Set(models.map(m=>m.name)).size!==models.length)return 'Each model must have a unique name.'
  for(const model of models){
   if(!model.name.trim())return 'Enter a model identifier.'
-  if(model.backend==='ucloud')return 'UCloud is reserved for judge configuration in this workspace.'
+  if(model.backend==='ucloud')return 'UCloud is reserved for inspector configuration in this workspace.'
   const p=model.parameters||{}
   if(p.max_tokens!==undefined&&(!Number.isInteger(p.max_tokens)||p.max_tokens<1))return `${model.name}: maximum output tokens must be a positive integer.`
   if(p.temperature!==undefined&&(!Number.isFinite(p.temperature)||p.temperature<0||p.temperature>2))return `${model.name}: temperature must be between 0 and 2.`

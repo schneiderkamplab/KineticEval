@@ -12,7 +12,7 @@ async def main():
     db=Database('kineticeval.db');service=Service(db);worker=Worker(db)
     for run_id in args.runs:
         service.control(run_id,'retry')
-        for kind in ['scoring','diagnostic','metrics','investigation','judge','report']:
+        for kind in ['scoring','diagnostic','metrics','investigation','inspector','report']:
             service.schedule(run_ids=[run_id])
             while claims:=db.claim_many(kind=kind,run_id=run_id,limit=32):
                 await asyncio.gather(*(worker.execute(claim) for claim in claims))

@@ -42,11 +42,73 @@ def create_app(db_path=None):
     @app.get('/api/health')
     def health(): return {'status': 'ok'}
 
+    @app.get('/api/models')
+    def model_configurations():
+        from .library import models
+        return models(service.db)
+
+    @app.post('/api/models')
+    def add_model(body: dict):
+        from .library import save_model
+        return save_model(service.db, body)
+
+    @app.post('/api/models/{model_id}')
+    def edit_model(model_id: str, body: dict):
+        from .library import save_model
+        return save_model(service.db, body, model_id)
+
+    @app.get('/api/results')
+    def result_collections():
+        from .library import results
+        return results(service.db)
+
+    @app.post('/api/results')
+    def add_result(body: dict):
+        from .library import save_result
+        return save_result(service.db, body)
+
+    @app.post('/api/launches/preview')
+    def preview_launch(body: dict):
+        from .workload import preview
+        return preview(service,body)
+
+    @app.post('/api/launches')
+    def launch_runs(body: dict):
+        from .library import launch
+        return launch(service, body)
+
+    @app.post('/api/results/{result_id}')
+    def edit_result(result_id: str, body: dict):
+        from .library import save_result
+        return save_result(service.db, body, result_id)
+
+    @app.delete('/api/results/{result_id}')
+    def delete_result(result_id: str):
+        from .db import ResultCollection
+        from .service import require
+        with service.db.session(immediate=True) as s:
+            s.delete(require(s, ResultCollection, result_id))
+        return {'deleted': result_id}
+
     @app.get('/api/evaluations')
     def evaluations(summary: bool = False): return service.evaluations(summary)
 
     @app.post('/api/evaluations')
     def create(definition: Definition): return service.create_evaluation(definition)
+
+    class RevisionDeletion(BaseModel):
+        revision_ids: list[str] = Field(min_length=1)
+        token: str = ''
+
+    @app.post('/api/evaluations/{evaluation_id}/deletion-preview')
+    def deletion_preview(evaluation_id: str, body: RevisionDeletion):
+        from .revision_deletion import preview
+        return preview(service.db, evaluation_id, body.revision_ids)
+
+    @app.post('/api/evaluations/{evaluation_id}/delete-revisions')
+    def delete_revisions(evaluation_id: str, body: RevisionDeletion):
+        from .revision_deletion import remove
+        return remove(service.db, evaluation_id, body.revision_ids, body.token)
 
     @app.get('/api/revisions/{revision_id}')
     def revision(revision_id: str):
@@ -54,6 +116,23 @@ def create_app(db_path=None):
         from .service import require
         with service.db.session() as s:
             return require(s, Revision, revision_id).definition
+
+    @app.get('/api/revisions/{revision_id}/inputs')
+    def revision_inputs(revision_id: str):
+        from .revisions import INPUT_KEYS
+        definition=revision(revision_id)
+        return {key:definition[key] for key in INPUT_KEYS}
+
+    @app.get('/api/revisions/{revision_id}/suggestions')
+    def revision_suggestions(revision_id: str):
+        definition=revision(revision_id)
+        return {key:definition.get(key, {}) for key in ('scorer','metrics','heuristics','inspector','expected_format','generation_defaults')}
+
+    @app.post('/api/revisions/{revision_id}/suggestions')
+    def save_suggestions(revision_id: str, patch: dict):
+        if set(patch)-{'scorer','metrics','heuristics','inspector','expected_format','generation_defaults'}:
+            raise ValueError('Suggestions cannot change evaluation inputs')
+        return service.revise(revision_id,patch)
 
     @app.post('/api/revisions/{revision_id}')
     def revise(revision_id: str, patch: dict): return service.revise(revision_id, patch)
@@ -94,7 +173,15 @@ def create_app(db_path=None):
     def run(body: RunRequest): return service.create_run(body)
 
     @app.get('/api/runs/{run_id}')
-    def results(run_id: str): return service.results(run_id)
+    def results(run_id: str, summary: bool = False): return service.results(run_id, summary)
+
+    class FailureLimit(BaseModel):
+        limit: int | None = Field(default=None, ge=0)
+        resume: bool = False
+
+    @app.post('/api/runs/{run_id}/failure-limit')
+    def failure_limit(run_id: str, body: FailureLimit):
+        return service.set_failure_inspector_limit(run_id, body.limit, body.resume)
 
     @app.post('/api/runs/{run_id}/{action}')
     def control(run_id: str, action: str, body: dict | None = None):
@@ -147,7 +234,11 @@ def create_app(db_path=None):
     @app.get('/api/providers/ucloud/models')
     async def models():
         from .providers import UCloud
-        return await UCloud().models()
+        import httpx
+        try:
+            return await UCloud().models()
+        except httpx.HTTPError as exc:
+            raise ValueError('Unable to load UCloud inspector models. Check the configured endpoint and inference credentials, or enter a model identifier manually.') from exc
 
     @app.get('/api/runs/{run_id}/progress')
     def progress(run_id: str):

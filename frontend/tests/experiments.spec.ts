@@ -1,9 +1,9 @@
 import {test,expect} from '@playwright/test'
 test('experiment preview requires explicit approval and edits invalidate the preview',async({page})=>{
  let prepared=0,approved=0
- const proposal={kind:'experiment',title:'Compare token budgets',rationale:'Judge recommendation',patch:{},origin_job:'judge-job'}
+ const proposal={kind:'experiment',title:'Compare token budgets',rationale:'Inspector recommendation',patch:{},origin_job:'inspector-job'}
  const plan={model:'fixture',example_ids:['one','two'],arms:[{name:'cap128',parameters:{max_tokens:128}}]}
- const record:any={id:'experiment1',proposal_id:'proposal1',baseline_id:'baseline1',status:'prepared',plan,runs:{},preview:{proposal_snapshot:proposal,origin_job:'judge-job',baseline_model:{name:'fixture'},note:'Only approval queues runs.',arms:[{name:'cap128',examples:2,repeats:1,reusable:0,pending_or_new:2,output_token_ceiling:256}]}}
+ const record:any={id:'experiment1',proposal_id:'proposal1',baseline_id:'baseline1',status:'prepared',plan,runs:{},preview:{proposal_snapshot:proposal,origin_job:'inspector-job',baseline_model:{name:'fixture'},note:'Only approval queues runs.',arms:[{name:'cap128',examples:2,repeats:1,reusable:0,pending_or_new:2,output_token_ceiling:256}]}}
  await page.route('**/api/**',async route=>{
   const path=new URL(route.request().url()).pathname
   let data:any=[]
@@ -20,7 +20,7 @@ test('experiment preview requires explicit approval and edits invalidate the pre
  await page.getByRole('button',{name:'Save approval preview'}).click()
  await expect(page.getByRole('button',{name:'Approve and queue follow-up runs'})).toBeVisible()
  expect(prepared).toBe(1);expect(approved).toBe(0)
- await page.getByLabel('Experiment arms').fill(JSON.stringify([{name:'cap256',parameters:{max_tokens:256}}]))
+ await page.getByLabel('Maximum output tokens',{exact:true}).fill('256')
  await expect(page.getByRole('button',{name:'Approve and queue follow-up runs'})).toHaveCount(0)
  await page.getByRole('button',{name:'Save approval preview'}).click()
  await page.getByRole('button',{name:'Approve and queue follow-up runs'}).click()
@@ -29,7 +29,7 @@ test('experiment preview requires explicit approval and edits invalidate the pre
  await page.screenshot({path:'test-results/experiment-approval.png',fullPage:true})
 })
 
-test('unsupported judge operations cannot be replaced with a parameter rerun',async({page})=>{
+test('unsupported inspector operations cannot be replaced with a parameter rerun',async({page})=>{
  const proposal={kind:'experiment',title:'Shuffle choices',rationale:'Test positional bias',patch:{steps:[{name:'shuffle'}]}}
  await page.route('**/api/**',async route=>{
   const path=new URL(route.request().url()).pathname
@@ -43,7 +43,7 @@ test('unsupported judge operations cannot be replaced with a parameter rerun',as
  await page.getByRole('button',{name:'Experiments',exact:true}).click()
  await page.getByRole('button',{name:'Configure experiment unsuppor'}).click()
  await expect(page.getByText(/Blocked: this recommendation/)).toBeVisible()
- await page.getByLabel('Experiment arms').fill(JSON.stringify([{name:'larger',parameters:{max_tokens:128}}]))
+ await expect(page.getByRole('heading',{name:'Experiment arms',exact:true})).toBeVisible()
  await expect(page.getByRole('button',{name:'Save approval preview'})).toBeDisabled()
  await expect(page.getByRole('button',{name:'Approve and queue follow-up runs'})).toHaveCount(0)
 })

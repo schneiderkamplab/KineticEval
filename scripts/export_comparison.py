@@ -1,4 +1,4 @@
-"""Export compact comparisons without conflating unjudged failures with wrong answers."""
+"""Export compact comparisons without conflating uninspected failures with wrong answers."""
 import csv
 import json
 import math
@@ -19,13 +19,13 @@ for scope in ['pilot','full']:
           sum(CASE WHEN d.status='succeeded' AND json_extract(d.result,'$.finding.semantic_correct') IS NOT NULL THEN 1 ELSE 0 END) semantic_known,
           sum(CASE WHEN d.status='succeeded' AND json_extract(d.result,'$.finding.semantic_correct')=1 THEN 1 ELSE 0 END) semantic_correct,
           sum(CASE WHEN json_extract(g.result,'$.metadata.finish_reason')='length' THEN 1 ELSE 0 END) token_limited,
-          sum(CASE WHEN j.status='succeeded' THEN 1 ELSE 0 END) judged
+          sum(CASE WHEN j.status='succeeded' THEN 1 ELSE 0 END) inspected
           FROM items i JOIN jobs g ON g.id=i.generation_id
           LEFT JOIN jobs sc ON sc.id=i.score_id LEFT JOIN jobs d ON d.id=i.diagnostic_id
-          LEFT JOIN jobs j ON j.id=i.judge_id WHERE i.run_id=? GROUP BY 1'''
+          LEFT JOIN jobs j ON j.id=i.inspector_id WHERE i.run_id=? GROUP BY 1'''
         for result in connection.execute(query,(run_id,)):
             row={**dict(result),'benchmark':benchmark,'scope':scope,'run_id':run_id}
-            for key in ['total','generated','scored','correct','semantic_known','semantic_correct','token_limited','judged']:
+            for key in ['total','generated','scored','correct','semantic_known','semantic_correct','token_limited','inspected']:
                 row[key]=row[key] or 0
             n=row['scored'] or 0
             if n:
@@ -35,7 +35,7 @@ for scope in ['pilot','full']:
                 row.update(accuracy=p,ci95_low=center-margin,ci95_high=center+margin)
             else:row.update(accuracy=None,ci95_low=None,ci95_high=None)
             row['complete']=n==row['total']
-            row['judge_status']='not run' if not row['judged'] else 'partially assessed'
+            row['inspector_status']='not run' if not row['inspected'] else 'partially assessed'
             rows.append(row)
 (root/'comparison.json').write_text(json.dumps({'protocol':'zero-shot generated-answer QA, greedy BF16, thinking disabled, 64 new tokens',
     'mmlu':'Inspect Evals deduplicated English test split (13,937 examples, 57 subjects)',

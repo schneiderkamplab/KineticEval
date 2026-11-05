@@ -17,7 +17,7 @@ def setup(tmp_path):
     asyncio.run(Worker(service.db).drain())
     with service.db.session() as s:
         s.add(Proposal(id='proposal',run_id=baseline,proposal={'kind':'experiment','title':'Token budget test',
-            'rationale':'Fixture recommendation','origin_job':'fixture-judge',
+            'rationale':'Fixture recommendation','origin_job':'fixture-inspector',
             'patch':{'proposed_settings':{'model':'fixture','arms':[{'name':'baseline','max_tokens':64},
                 {'name':'larger','max_tokens':128}]}},'example_ids':['capital']}))
     return service,baseline
@@ -49,7 +49,7 @@ def test_preview_no_execution_approval_atomic_idempotent_and_paired_results(tmp_
     asyncio.run(Worker(service.db).drain())
     compared=experiments.results(service,draft['id'])
     assert all(r['paired_scored']==3 and r['paired_delta']==0 for r in compared['comparisons'])
-    assert compared['preview']['origin_job']=='fixture-judge'
+    assert compared['preview']['origin_job']=='fixture-inspector'
 
 
 def test_partial_scope_prompt_revision_and_invalid_plans(tmp_path):

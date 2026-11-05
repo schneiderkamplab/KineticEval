@@ -42,7 +42,7 @@ def review(service, proposal_id, action, cases=None):
             return {'validation': proposal.validation}
         if proposal.proposal['kind'] == 'heuristic' and not (proposal.validation or {}).get('passed'):
             raise ValueError('Validate heuristic against positive examples and counterexamples before approval')
-        new = Revision(id=uid(), evaluation_id=revision.evaluation_id, parent_id=revision.id, definition=data)
-        s.add(new)
+        from .revisions import save_revision
+        new, created = save_revision(s, revision, data)
         proposal.status, proposal.revision_id = 'approved', new.id
-        return {'status': 'approved', 'revision_id': new.id}
+        return {'status': 'approved', 'revision_id': new.id, 'created': created}

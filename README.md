@@ -23,7 +23,7 @@ python -m uvicorn kineticeval.api:create_app --factory --host 127.0.0.1 --port 8
 python -m kineticeval.worker
 ```
 
-Open **http://127.0.0.1:8000**. Choose **Start with QA fixture**, then **Start evaluation**. The two default models are deterministic fixtures, clearly labeled as such. Real models use `hf` (local GPU), `inspect`, or `ucloud` backends. Jobs remain pending until the worker runs. Use `python -m kineticeval.worker --concurrency 4` for concurrent handlers, or `--once` to drain available work and exit.
+Open **http://127.0.0.1:8000**. Choose **Start with QA fixture**, then **Start evaluation**. For a demo, choose **Additional options → Use demo models**; these are deterministic fixtures. Evaluated models use local `hf` weights or an `inspect` adapter. UCloud is reserved for inspectors in this workspace. Jobs remain pending until the worker runs. Use `python -m kineticeval.worker --concurrency 4` for concurrent handlers, or `--once` to drain available work and exit.
 
 For frontend development, run `npm run dev --prefix frontend`; its API proxy points to port 8000. Set `KINETICEVAL_DB` in both processes to use a different database. SQLite persists definitions, sampled rows, rendered prompts, attempts, and analysis artifacts. Keep the service bound to localhost; there are no accounts or shared-hosting permissions.
 
@@ -49,15 +49,15 @@ Each run pins an immutable definition and a seeded, materialized sample manifest
 - **Rerun selected** creates a linked run for selected example IDs and chosen models. Compatible artifacts are reused. Partial denominators remain visible.
 - **Fresh generations** bypasses reuse with a new sample identity. Repeats have separate identities.
 
-Cache identity includes rendered messages, backend/model configuration, generation parameters, and repeat identity. Reference-only corrections reuse generations; prompts and model inputs invalidate affected generations. Scoring, heuristics, judging, and reports have separate dependency keys. Metric-only changes reuse underlying scores. Aggregate metric outputs are persisted, so historical summaries remain readable after installed components change. Lease recovery rejects stale worker writes. A network interruption can leave a provider request's outcome unknown; retries do not promise exactly-once external execution.
+Cache identity includes rendered messages, backend/model configuration, generation parameters, and repeat identity. Reference-only corrections reuse generations; prompts and model inputs invalidate affected generations. Scoring, heuristics, inspection, and reports have separate dependency keys. Metric-only changes reuse underlying scores. Aggregate metric outputs are persisted, so historical summaries remain readable after installed components change. Lease recovery rejects stale worker writes. A network interruption can leave a provider request's outcome unknown; retries do not promise exactly-once external execution.
 
-## Judges and improvement proposals
+## Inspectors and improvement proposals
 
 Set `UCLOUD_BASE_URL` to the inference server's OpenAI-compatible base URL **including `/v1`**, and `UCLOUD_API_KEY` in the API and worker environment. Do not put credentials in definitions or files committed to source control. The address is supplied by the UCloud model playground; it is intentionally not guessed.
 
-`GET /api/providers/ucloud/models` discovers available model IDs. Enable `judge` in a configuration revision with `provider: "ucloud"` and a discovered `model`. The worker uses chat completions, validates structured output, and rejects fabricated evidence excerpts. Failures remain inspectable and retryable. Live integration checks are opt-in; normal tests use a mocked transport or an explicitly labeled fake judge.
+`GET /api/providers/ucloud/models` discovers available model IDs. Enable `inspector` in a configuration revision with `provider: "ucloud"` and a discovered `model`. The worker uses chat completions, validates structured output, and rejects fabricated evidence excerpts. Failures remain inspectable and retryable. Live integration checks are opt-in; normal tests use a mocked transport or an explicitly labeled fake inspector.
 
-Failed responses with unresolved dimensions receive judge assessment. Successes and failures are also sampled separately per model for auditing (10%, minimum 10, maximum 100, bounded by stratum size). Seeds, sample membership, and inclusion probabilities are recorded. Judge findings never silently overwrite heuristic findings or benchmark scores.
+Failed responses with unresolved dimensions receive inspector assessment. Successes and failures are also sampled separately per model for auditing (10%, minimum 10, maximum 100, bounded by stratum size). Seeds, sample membership, and inclusion probabilities are recorded. Inspector findings never silently overwrite heuristic findings or benchmark scores.
 
 Reports summarize evidence and propose data, prompt, scorer, or heuristic changes. Reports include at most 200 detailed results and explicitly disclose truncation. Users approve proposals into new revisions. Heuristic proposals require positive cases and counterexamples to pass regression validation. No generated Python is executed.
 
@@ -77,7 +77,7 @@ npx --prefix frontend playwright install chromium
 npm run test:e2e --prefix frontend
 ```
 
-For an explicit live judge check, set `KINETICEVAL_LIVE_TESTS=1` and `UCLOUD_JUDGE_MODEL` in addition to the UCloud endpoint and key, then run `pytest -k live_ucloud`. This makes one small inference request.
+For an explicit live inspector check, set `KINETICEVAL_LIVE_TESTS=1` and `UCLOUD_INSPECTOR_MODEL` in addition to the UCloud endpoint and key, then run `pytest -k live_ucloud`. This makes one small inference request.
 
 Browser tests launch their own disposable API, worker, and database. API documentation is available at `/docs`. Tests cover cache reuse, corrections, partial runs, stale leases, analysis retries, proposal validation, Inspect integration, UCloud's transport contract, and the dashboard workflow.
 
@@ -86,48 +86,74 @@ Reference documentation: [Inspect tasks](https://inspect.aisi.org.uk/tasks.html)
 
 ## Local Hugging Face evaluation
 
-The `hf` backend runs model weights on this server; it does not send generations to a hosted API. Use a CUDA-enabled Transformers environment with support for the selected architecture. Set `CUDA_VISIBLE_DEVICES` to an authorized GPU and run one automatic model-grouped worker per allocated GPU:
+The `hf` backend runs pinned Hugging Face weights locally. The fleet prefers vLLM for supported architectures, with compiled Transformers as the single-GPU fallback. Run the fleet from the CUDA environment containing both engines, and the analysis worker from the API environment:
 
 ```bash
-CUDA_VISIBLE_DEVICES=6 python -m kineticeval.local_worker --db kineticeval.db \
-  --batch-size 8 --memory-fraction 0.25 --watch
+python -m kineticeval.gpu_fleet --db kineticeval.db --gpus 0,1,2,3,4,5,6,7 --cap-gib 80
 python -m kineticeval.worker --analysis-only --concurrency 4
 ```
 
-The GPU worker scans all active runs for pending HF requests. It drains compatible requests for the resident weights first, including different generation parameters and chat-template arguments, then switches to the oldest queued weight/runtime configuration. Each batch still uses identical generation settings. Weight revisions, local artifacts, dtype, and context settings remain distinct. Switching releases the old model and CUDA cache before loading another. Idle workers retain their last model for reuse; continuous work for it can delay other models. Use optional `--model` only to restrict a worker deliberately. Canceled runs and other backends are excluded. Load failures are recorded and do not stop unrelated models; retry failed jobs after fixing their configuration.
+The fleet targets 90% of currently free VRAM, capped at 80 GiB per GPU. It estimates weight size plus runtime reserve, selects the smallest fitting TP group (1, 2, 4, or 8), and starts independent TP=1 replicas when the model fits. Tensor-parallel execution uses vLLM; unsupported large-model architectures fail explicitly rather than silently substituting pipeline parallelism. It retains resident weights across compatible requests and releases idle groups when another model needs them. Models with continuous pending work can delay other models. Other applications' allocations are left intact.
 
-The analysis-only worker handles scoring, checks, metrics, configured judges and reports across all active runs; supply its UCloud environment for judging. Generation is reserved for the GPU worker.
+vLLM manages KV-cache capacity and continuous batching within its VRAM budget. Transformers uses `torch.compile`, starts with small batches, then adjusts from observed peak memory; CUDA OOM reduces the batch and retries the same requests. The memory target is a budget, not a guarantee of exactly 90% utilization for every workload. Compilation and model loading add startup latency. Actual engine, TP, compilation state, pinned weights, and generation settings are recorded with responses.
+
+For manual debugging, `python -m kineticeval.local_worker --watch --engine auto --adaptive` runs one worker; optional `--model` restricts it. Production workers are managed by the fleet. The analysis-only worker schedules scoring as responses arrive and handles checks, metrics, configured inspectors, and reports across all active runs. Supply its UCloud environment for inspection. The dashboard polls run status and progress automatically.
 
 Model configurations include `revision` for HF weights, or `local_path` for an existing export. Local files receive a content digest; remote revisions resolve to commit IDs. Native chat templates, template arguments, dtype, context limits, runtime versions, token counts, and stop reasons are recorded. Inputs exceeding the context budget fail explicitly rather than being truncated. HRM prefix-attention masks are preserved when the model configuration enables them.
 
 The current comparison uses zero-shot Inspect Evals definitions for WinoGrande validation, HellaSwag validation, and deduplicated English MMLU test. It uses greedy BF16 generation, native chat templates with `enable_thinking=False` requested, and 64 output tokens. These are generated-answer scores, not likelihood-ranking leaderboard scores. `scripts/create_campaign.py` queues a seeded 100-example pilot and the full split; full runs reuse pilot generations. `scripts/analyze_campaign.py` processes finished runs by stage. Credential-free manifests and results are stored under ignored `artifacts/` and the local database.
 
-UCloud is used separately for the judge. It requires a **provider inference token** generated from a model page in the UCloud AI playground. A general platform API token for `cloud.sdu.dk` does not authenticate against the inference endpoint. Always use the server address displayed with the inference token.
+UCloud is used separately for the inspector. It requires a **provider inference token** generated from a model page in the UCloud AI playground. A general platform API token for `cloud.sdu.dk` does not authenticate against the inference endpoint. Always use the server address displayed with the inference token.
 
 ## Automatic failure investigations
 
-With judging enabled, KineticEval schedules a model-specific investigation when at least three completed responses and at least 20% of a model's responses hit the token limit or remain unresolved scored failures. This runs before all individual audits finish. The framework samples up to 12 affected responses and 12 controls deterministically, retaining population counts and the sampling policy. Evidence includes the source examples, rendered prompts, requested model settings, generation metadata, scores, and heuristic findings.
+With inspection enabled, KineticEval schedules a model-specific investigation when at least three completed responses and at least 20% of a model's responses hit the token limit or remain unresolved scored failures. This runs before all individual audits finish. The framework samples up to 12 affected responses and 12 controls deterministically, retaining population counts and the sampling policy. Evidence includes the source examples, rendered prompts, requested model settings, generation metadata, scores, and heuristic findings.
 
-The LLM judge supplies the diagnosis and recommendations; the scheduler only detects symptoms. Investigations appear in run results and feed the final report. Recommendations retain their originating job and remain pending. Experiment recommendations require an explicit approval preview: they do not alter settings, rerun models, or rewrite scores before approval. A requested thinking flag is evidence of configuration, not proof of effective behavior.
+The LLM inspector supplies the diagnosis and recommendations; the scheduler only detects symptoms. Investigations appear in run results and feed the final report. Recommendations retain their originating job and remain pending. Experiment recommendations require an explicit approval preview: they do not alter settings, rerun models, or rewrite scores before approval. A requested thinking flag is evidence of configuration, not proof of effective behavior.
 
 ## Approving traceable follow-up experiments
 
-Open **Experiments**, choose a judge recommendation, select a baseline model and matched example IDs, and edit named arms. Supported overrides are generation parameters (`max_tokens`, `temperature`, `top_p`, `seed`), `enable_thinking`, and the prompt template. Unsupported transformations such as choice reordering are not silently translated into executable plans.
+Open **Experiments**, choose a inspector recommendation, select a baseline model and matched example IDs, and edit named arms. Supported overrides are generation parameters (`max_tokens`, `temperature`, `top_p`, `seed`), `enable_thinking`, and the prompt template. Unsupported transformations such as choice reordering are not silently translated into executable plans.
 
-**Save approval preview** persists an immutable plan with exact settings, sample scope, rendered prompt examples, cache reuse counts, and output-token ceilings. It creates no run or generation jobs. **Approve and queue follow-up runs** atomically creates linked runs for all arms, recording the source proposal, judge job, baseline, and approval time. Repeated approval requests return the same runs. Prompt changes create new definition revisions; weights, references, scoring, and baseline repeats remain fixed.
+**Save approval preview** persists an immutable plan with exact settings, sample scope, rendered prompt examples, cache reuse counts, and output-token ceilings. It creates no run or generation jobs. **Approve and queue follow-up runs** atomically creates linked runs for all arms, recording the source proposal, inspector job, baseline, and approval time. Repeated approval requests return the same runs. Prompt changes create new definition revisions; weights, references, scoring, and baseline repeats remain fixed.
 
 The comparison panel matches example ID and repeat for the selected model. It reports coverage, original and follow-up scores on scored pairs, paired score differences, and truncation counts. Incomplete pairs do not contribute to score changes. New local generations also retain raw decoded output with special tokens and token IDs; older cached generations may lack these fields.
 
-Workers still execute queued work. A local GPU worker can wait with `--watch` and reuse loaded weights across parameter/template-argument arms. Run `python scripts/analyze_experiments.py` in the pinned CPU environment to process approved runs and their configured judges; it requests the inference credential without storing it in files. The automatic local worker waits on GPU 6 with batch size 8 and a 0.25 memory fraction. No follow-up inference occurs until approval.
+Workers still execute queued work. A local GPU worker can wait with `--watch` and reuse loaded weights across parameter/template-argument arms. Run `python scripts/analyze_experiments.py` in the pinned CPU environment to process approved runs and their configured inspectors; it requests the inference credential without storing it in files. The GPU fleet watches all eight authorized GPUs and allocates only the available headroom. No follow-up inference occurs until approval.
 
-## Experiment validation and judge cache provenance
+## Experiment validation and inspector cache provenance
 
 Experiment preparation and approval both reject unsupported operations, prose-only step lists, and plans that make no effective change to model inputs or generation settings. A baseline arm is allowed alongside changed arms; a fully unchanged rerun is not an experiment. Cached generations from a previously executed changed arm remain reusable. Unsupported proposals stay visible with a blocking reason; they are not converted into default no-op arms.
 
-New judge, investigation, and report jobs persist their exact system instructions, output schema, evidence-validation policy, and correction policy, together with a SHA-256 identity. These are part of the job cache key. New runs cannot reuse a judgement from a different protocol. Resuming an existing run keeps its original pinned protocol, and workers send that stored prompt rather than rebuilding it from current code. Pending pre-versioning jobs use the frozen legacy protocol; historical unversioned results remain inspectable but cannot satisfy new versioned cache entries. Schema or integrity mismatches are rejected before contacting the provider.
+New inspector, investigation, and report jobs persist their exact system instructions, output schema, evidence-validation policy, and correction policy, together with a SHA-256 identity. These are part of the job cache key. New runs cannot reuse a assessment from a different protocol. Resuming an existing run keeps its original pinned protocol, and workers send that stored prompt rather than rebuilding it from current code. Pending pre-versioning jobs use the frozen legacy protocol; historical unversioned results remain inspectable but cannot satisfy new versioned cache entries. Schema or integrity mismatches are rejected before contacting the provider.
 
 ## Evaluation overview and editing
 
 Evaluation cards and detail pages show example counts, actual corrections, evaluation type, and the scorer in use. Detail pages add selected sample counts, aggregate metrics, a correction indicator, and subset distribution bars. Inspect scorers are identified by their underlying scorer, rather than only the adapter name.
 
-Use **Edit prompts**, **Edit sampling**, **Edit scoring & checks**, or **Edit judge** to open only the relevant settings. Their saved patches are limited to that section. Use **Edit evaluation** for labeled fields covering name, description, prompts, answer format, sampling, scoring, diagnostic checks, and the judge. **Preview changes** summarizes affected prompts and references before saving a new revision. Existing custom/Inspect component configuration is preserved when unrelated fields change. Example corrections and common import options also use fields; imported choice changes that require coordinated prompt edits remain an advanced operation. **View/edit configuration (JSON)** explicitly opens the advanced editor.
+Use **Edit prompts**, **Edit sampling**, **Edit scoring & checks**, or **Edit inspector** to open only the relevant settings. Their saved patches are limited to that section. Use **Edit evaluation** for labeled fields covering name, description, prompts, answer format, sampling, scoring, diagnostic checks, and the inspector. **Preview changes** summarizes affected prompts and references before saving a new revision. Existing custom/Inspect component configuration is preserved when unrelated fields change. Example corrections and common import options also use fields; imported choice changes that require coordinated prompt edits remain an advanced operation. **View/edit configuration (JSON)** explicitly opens the advanced editor.
+
+### Progress and cancellation
+
+Progress separates completed, running, queued-for-worker, and dependency-waiting work. Heuristic coverage counts every checked response; semantic verdicts separately report correct, incorrect, and unresolved cases. Analysis workers share inspector capacity between active runs, prioritizing an investigation or report within each run before further item inspection. Scoring and heuristic checks stream as generations arrive.
+
+Cancellation applies to the selected run, not automatically to its parent or other related runs. The result view exposes the parent link. Inspector workers check for an active consumer before each provider request, including repair attempts. Already-sent requests may incur cost; completed evidence is retained. Canceled claims awaiting a provider request return to the queue for a deliberate resume, but cannot be claimed while every linked run is inactive.
+
+### Input revisions, model configurations, and Results
+
+Evaluation revisions identify data (including reference answers), sampling, and prompt construction. Editing suggested scoring, metrics, heuristics, or LLM inspector settings does not create an input revision. Every run freezes its effective settings; subsequent changes to suggestions do not rewrite historical results. Revision names are optional and creation timestamps are displayed in local time.
+
+The **Models** library stores named configurations, including multiple variants of the same physical model. The shared **Create runs** dialog selects evaluation revisions and model configurations and permits overrides before launch. One evaluation across several models is one run; several evaluations create several runs grouped into a **Result**. Submission retries use an idempotency key. Matching generations remain reusable across display-name changes.
+
+**Results** can also group existing runs. Removing membership or deleting a collection does not delete its runs. Comparisons rank fully scored entries within matching input/scoring groups; an explicit mismatch override shows a warning. Unknown metric direction requires a choice before ranking. Response outcome charts distinguish correct, incorrect, and unscored responses; inspection coverage is separate.
+
+Scoring and inspection are different roles: the **LLM inspector** investigates diagnostic dimensions, audits responses, and proposes changes. The word judge is reserved for future judged scoring. Pinned historical inspection prompts and schemas remain intact for reproducibility.
+
+For an older database, stop the API and all workers, take a consistent SQLite backup, then run:
+
+```sh
+python -m kineticeval.migrate_inspector kineticeval.db
+python -m kineticeval.migrate_inputs kineticeval.db
+```
+
+These migrations are transactional and idempotent. Input consolidation assigns new revision IDs and rewrites references without aliases; run and job IDs remain stable. Restart the API and workers only after both commands complete. Never run old workers against the migrated schema. Roll back by restoring the backup together with its matching code version.

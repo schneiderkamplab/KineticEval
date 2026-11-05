@@ -22,7 +22,7 @@ async def main():
                 remaining=s.scalar(select(func.count()).select_from(Item).join(Job,Job.id==Item.generation_id)
                     .where(Item.run_id==run_id,Job.status.in_(['pending','running'])))
             if remaining:continue
-            for kind in ['scoring','diagnostic','metrics','investigation','judge','report']:
+            for kind in ['scoring','diagnostic','metrics','investigation','inspector','report']:
                 service.schedule(run_ids=[run_id])
                 while claims:=db.claim_many(kind=kind,run_id=run_id,limit=4,lease_seconds=600):
                     if kind in {'scoring','diagnostic','metrics'}:await worker.execute_batch(claims)

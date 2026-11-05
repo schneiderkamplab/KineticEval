@@ -10,7 +10,7 @@ if path.exists():
     raise SystemExit('Campaign manifest exists; resume its runs instead of duplicating them')
 models=[json.loads((Path('artifacts')/f'{name}-smoke.json').read_text())['model'] for name in ['mimir','gemma','qwen']]
 service=Service(Database('kineticeval.db'))
-manifest={'created':time.time(),'db':str(Path('kineticeval.db').resolve()),'models':models,'pilot':{},'full':{},'revisions':{},'judge_status':'awaiting provider-scoped inference credential'}
+manifest={'created':time.time(),'db':str(Path('kineticeval.db').resolve()),'models':models,'pilot':{},'full':{},'revisions':{},'inspector_status':'awaiting provider-scoped inference credential'}
 for name in ['winogrande','hellaswag','mmlu']:
     definition=json.loads((Path('artifacts')/f'{name}-definition.json').read_text())
     created=service.create_evaluation(definition)

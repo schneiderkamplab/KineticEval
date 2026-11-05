@@ -12,8 +12,8 @@ def test_scheduler_automatically_investigates_truncation_and_records_recommendat
     async def generate(payload):
         return {'response':'Unfinished explanation', 'metadata':{'finish_reason':'length',
             'output_tokens':64,'rendered_chat_prompt':'rendered input'}}
-    original = providers.judge
-    async def judge(payload, report=False):
+    original = providers.inspector
+    async def inspector(payload, report=False):
         if payload['evidence'].get('purpose') == 'automatic_pattern_investigation':
             observed.append(payload)
             assert report
@@ -22,10 +22,10 @@ def test_scheduler_automatically_investigates_truncation_and_records_recommendat
                     'patch':{'parameters':{'max_tokens':256}},'example_ids':[]}]}
         return await original(payload, report)
     monkeypatch.setattr(providers, 'generate', generate)
-    monkeypatch.setattr(providers, 'judge', judge)
+    monkeypatch.setattr(providers, 'inspector', inspector)
     service = Service(Database(tmp_path/'investigations.db'))
     definition = demo_definition()
-    definition['judge'] = {'enabled':True,'provider':'fake'}
+    definition['inspector'] = {'enabled':True,'provider':'fake'}
     revision = service.create_evaluation(definition)['revision_id']
     run = service.create_run({'revision_id':revision,'models':[{'name':'any-model','backend':'fake',
         'parameters':{'max_tokens':64}}]})['id']
@@ -48,7 +48,7 @@ def test_scheduler_automatically_investigates_truncation_and_records_recommendat
     assert len(service.results(run)['proposals']) == 1
 
 
-def test_disabled_judge_never_schedules_investigation(tmp_path, monkeypatch):
+def test_disabled_inspector_never_schedules_investigation(tmp_path, monkeypatch):
     async def generate(payload):
         return {'response':'unfinished','metadata':{'finish_reason':'length'}}
     monkeypatch.setattr(providers, 'generate', generate)

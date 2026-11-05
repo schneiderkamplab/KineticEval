@@ -188,3 +188,19 @@ def test_base_model_gets_exact_single_user_prompt():
     assert render_prompts(tokenizer, [{'messages':[{'role':'user','content':'Question\nANSWER: '}]}], {}) == ['Question\nANSWER: ']
     with pytest.raises(ValueError, match='single user'):
         render_prompts(tokenizer, [{'messages':[{'role':'system','content':'instruction'},{'role':'user','content':'Q'}]}], {})
+
+
+def test_cached_weights_still_complete_processor_metadata(tmp_path, monkeypatch):
+    import huggingface_hub
+    from kineticeval.local_hf import resolve_source
+    (tmp_path / 'model.safetensors').touch()
+    calls = []
+    def snapshot(name, **kwargs):
+        calls.append(kwargs)
+        return str(tmp_path)
+    monkeypatch.setattr(huggingface_hub, 'snapshot_download', snapshot)
+    assert resolve_source({'name':'model', 'revision':'pinned'}) == str(tmp_path)
+    assert calls[0]['local_files_only'] is True
+    assert calls[1]['revision'] == 'pinned'
+    assert '*.json' in calls[1]['allow_patterns']
+    assert '*.safetensors' not in calls[1]['allow_patterns']

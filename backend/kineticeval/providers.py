@@ -1,8 +1,11 @@
-"""Generation and judge providers. Credentials never enter stored payloads."""
+"""Generation and inspector providers. Credentials never enter stored payloads."""
 import json
+from contextvars import ContextVar
+
+inspector_request_guard = ContextVar("inspector_request_guard", default=None)
 import os
 import httpx
-from .schemas import JudgeResult, ReportResult
+from .schemas import InspectorResult, ReportResult
 
 
 class UCloud:
@@ -68,22 +71,25 @@ def parse_json(text):
     return json.loads(value)
 
 
-async def judge(payload, report=False):
-    from .judge_protocol import checked_protocol
+async def inspector(payload, report=False):
+    from .inspector_protocol import checked_protocol
     protocol = checked_protocol(payload,report)
     protocol_ref = {'sha256':protocol['sha256'], 'version':protocol['version']}
     config = payload['config']
-    schema = ReportResult if report else JudgeResult
+    schema = ReportResult if report else InspectorResult
     if config['provider'] == 'fake':
         if report:
             return ReportResult(summary=('Fixture investigation: review recurring symptoms.' if payload['evidence'].get('purpose') == 'automatic_pattern_investigation' else 'Fixture report: review scoring and unresolved cases.'), findings=['This deterministic report is for workflow testing only.']).model_dump()
         finding = payload['evidence']['diagnostic']['finding']
-        return JudgeResult(**{**finding, 'explanation': 'Deterministic fixture judge; not an independent correctness assessment.'}).model_dump()
+        return InspectorResult(**{**finding, 'explanation': 'Deterministic fixture inspector; not an independent correctness assessment.'}).model_dump()
     instruction = protocol['instruction']
     messages = [{'role': 'system', 'content': instruction},
         {'role': 'user', 'content': json.dumps(payload['evidence'], ensure_ascii=False)}]
     attempts = []
     for attempt in range(protocol['max_attempts']):
+        guard = inspector_request_guard.get()
+        if guard is not None:
+            guard()
         result = await UCloud(endpoint=config.get('endpoint')).chat(config['model'], messages,
             {'temperature': 0, 'max_tokens': config['max_tokens']})
         attempts.append(result['metadata'])

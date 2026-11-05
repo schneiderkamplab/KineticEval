@@ -7,7 +7,7 @@ afterEach(()=>{cleanup();vi.clearAllMocks()})
 it('shows stage denominators, reused work, failures and model preparation',async()=>{
  vi.mocked(api).mockResolvedValue({status:'active',reused:2,activities:[{phase:'preparing_model',model:'local/HF'}],models:[],stages:[
   {kind:'generation',counts:{succeeded:4,running:1,pending:5},total:10},
-  {kind:'judge',counts:{succeeded:1,failed:1},total:2,dynamic:true}]})
+  {kind:'inspector',counts:{succeeded:1,failed:1},total:2,dynamic:true}]})
  render(<RunProgress id="run"/>)
  await screen.findByText(/Preparing model/)
  expect(screen.getByRole('progressbar',{name:'Generating responses'})).toHaveAttribute('value','4')

@@ -6,7 +6,7 @@ from .core import identity
 
 
 def schedule_investigations(session, run, items, definition, job_for):
-    if not definition['judge']['enabled']:
+    if not definition['inspector']['enabled']:
         return []
     groups = defaultdict(list)
     for item in items:
@@ -27,7 +27,7 @@ def schedule_investigations(session, run, items, definition, job_for):
             continue
         # Sample symptoms and controls separately, deterministically; never the first N rows.
         affected = {r[0].id for r in truncated + unresolved}
-        rng = random.Random(definition['judge']['seed'])
+        rng = random.Random(definition['inspector']['seed'])
         selected = []
         strata = []
         for name, group in [('affected', [r for r in rows if r[0].id in affected]),
@@ -44,7 +44,7 @@ def schedule_investigations(session, run, items, definition, job_for):
                 'generation': g.result, 'score': sc.result if sc else None,
                 'diagnostic': d.result if d else None} for i, g, sc, d in selected],
             'note': 'A symptom-triggered sample, not a full independent rescore. Settings are requested settings, not proof of effective model behavior.'}
-        job = job_for(session, run.id, 'investigation', {'config': definition['judge'], 'evidence': evidence})
+        job = job_for(session, run.id, 'investigation', {'config': definition['inspector'], 'evidence': evidence})
         jobs.append(job)
         if job.status == 'succeeded':
             for index, proposal in enumerate(job.result['suggestions']):

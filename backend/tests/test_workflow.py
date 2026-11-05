@@ -19,9 +19,9 @@ def complete(service):
     asyncio.run(Worker(service.db).drain())
 
 
-def setup_run(service, judge=False):
+def setup_run(service, inspector=False):
     data = demo_definition()
-    data['judge'] = {'enabled': judge, 'provider': 'fake'}
+    data['inspector'] = {'enabled': inspector, 'provider': 'fake'}
     rev = service.create_evaluation(data)['revision_id']
     run = service.create_run({'revision_id': rev, 'models': [
         {'name': 'literal', 'backend': 'fake'}, {'name': 'verbose', 'backend': 'fake', 'parameters': {'style': 'sentence'}}]})['id']
@@ -127,7 +127,7 @@ def test_dependency_specific_invalidation(service):
     assert [i['generation']['id'] for i in original['items']] == [i['generation']['id'] for i in rescored['items']]
     assert [i['score']['id'] for i in original['items']] != [i['score']['id'] for i in rescored['items']]
     heuristic_rev = service.revise(rev, {'heuristics': [{'name': 'qa', 'version': '2'}]})['revision_id']
-    heuristic_run = service.create_run({'revision_id': heuristic_rev, 'models': models})['id']
+    heuristic_run = service.create_run({'revision_id': heuristic_rev, 'models': models, 'analysis_overrides':{'scorer':original['definition']['scorer']}})['id']
     complete(service)
     rediagnosed = service.results(heuristic_run)
     assert [i['score']['id'] for i in original['items']] == [i['score']['id'] for i in rediagnosed['items']]
@@ -137,27 +137,27 @@ def test_dependency_specific_invalidation(service):
     assert not any(i['reused'] for i in service.results(prompt_run)['items'])
 
 
-def test_judge_failure_retry_and_disagreement(service, monkeypatch):
+def test_inspector_failure_retry_and_disagreement(service, monkeypatch):
     from kineticeval import providers
     rev, run = setup_run(service, True)
-    original = providers.judge
+    original = providers.inspector
     async def fail(payload, report=False):
-        if not report: raise ValueError('temporary judge failure')
+        if not report: raise ValueError('temporary inspector failure')
         return await original(payload, report)
-    monkeypatch.setattr(providers, 'judge', fail)
+    monkeypatch.setattr(providers, 'inspector', fail)
     complete(service)
     assert service.results(run)['run']['status'] == 'completed_with_errors'
     async def disagree(payload, report=False):
         result = await original(payload, report)
         if not report: result['semantic_correct'] = False
         return result
-    monkeypatch.setattr(providers, 'judge', disagree)
+    monkeypatch.setattr(providers, 'inspector', disagree)
     service.control(run, 'retry')
     complete(service)
     result = service.results(run)
     assert result['run']['status'] == 'completed'
     assert any('semantic_correct' in row['disagreements'] for row in result['items'])
-    assert all(row['judge']['status'] == 'succeeded' for row in result['items'])
+    assert all(row['inspector']['status'] == 'succeeded' for row in result['items'])
 
 
 def test_partial_heuristic_coverage_and_negation():
@@ -235,14 +235,14 @@ def test_worker_interruptions_preserve_completed_stages(service):
             break
     result = service.results(run)
     assert result['run']['status'] == 'completed'
-    assert {'generation','scoring','diagnostic','judge','report','metrics'} <= interrupted
+    assert {'generation','scoring','diagnostic','inspector','report','metrics'} <= interrupted
     assert all(row['generation']['status'] == 'succeeded' for row in result['items'])
 
 
 def test_audit_sampling_probabilities(service):
     definition = demo_definition()
     definition['examples'] = [{'id':str(i),'input':f'Question {i}', 'target':'A' if i<100 else 'B'} for i in range(120)]
-    definition['judge'] = {'enabled':True,'provider':'fake','audit_fraction':.1,'audit_min':2,'audit_max':20,'seed':5}
+    definition['inspector'] = {'enabled':True,'provider':'fake','audit_fraction':.1,'audit_min':2,'audit_max':20,'seed':5}
     rev=service.create_evaluation(definition)['revision_id']
     run=service.create_run({'revision_id':rev,'models':[{'name':'fixture','backend':'fake'}]})['id']
     complete(service)
@@ -252,7 +252,7 @@ def test_audit_sampling_probabilities(service):
     assert strata['failure']['sample_size']==2
     assert strata['success']['probability']==.1
     assert len(result['run']['audit']['selected'])==12
-    assert sum(bool(row['judge']) for row in result['items'])>=12
+    assert sum(bool(row['inspector']) for row in result['items'])>=12
 
 
 def test_installed_custom_components(service, monkeypatch):
@@ -309,11 +309,12 @@ def test_evaluation_overview_counts_actual_corrections_and_selected_subsets(serv
 
 
 def test_library_name_tracks_latest_revision_without_rewriting_history(service):
-    rev,_=setup_run(service)
+    rev,run=setup_run(service)
     service.revise(rev,{'name':'Updated evaluation name','description':'Updated description'})
     evaluation=service.evaluations(summary=True)[0]
     assert evaluation['name']=='Updated evaluation name'
-    assert evaluation['revisions'][1]['definition']['name']=='QA diagnostic laboratory'
+    assert len(evaluation['revisions'])==1
+    assert service.results(run)['definition']['name']=='QA diagnostic laboratory'
 
 
 def test_revision_names_are_display_metadata(service):
@@ -323,7 +324,7 @@ def test_revision_names_are_display_metadata(service):
     for summary in (False, True):
         assert service.evaluations(summary)[0]['revisions'][0]['name'] == 'smoke'
     assert service.results(run) == before
-    child = service.revise(revision, {'description': 'Full version'})['revision_id']
+    child = service.revise(revision, {'sampler': {'seed':43}, 'description': 'Full version'})['revision_id']
     revisions = {r['id']: r for r in service.evaluations()[0]['revisions']}
     assert revisions[child]['name'] == ''
     assert revisions[revision]['name'] == 'smoke'
@@ -339,3 +340,103 @@ def test_revision_name_api(tmp_path):
     assert client.post(f'/api/revisions/{revision}/name', json={'name': 'full'}).status_code == 200
     assert client.post(f'/api/revisions/{revision}/name', json={'name': 'x' * 201}).status_code == 422
     assert client.post('/api/revisions/missing/name', json={'name': 'full'}).status_code == 404
+
+
+def test_scoring_is_scheduled_before_generation_finishes(service):
+    revision, run = setup_run(service)
+    claim = service.db.claim_many(kind='generation',run_id=run,limit=1)[0]
+    service.db.finish(claim['id'],claim['token'],result={'response':'A'})
+    service.schedule()
+    scoring = service.db.claim_many(kind='scoring',run_id=run,limit=10)
+    assert len(scoring) == 1
+    asyncio.run(Worker(service.db).execute(scoring[0]))
+    service.schedule()
+    assert len(service.db.claim_many(kind='diagnostic',run_id=run,limit=10)) == 1
+    with service.db.session() as s:
+        assert s.scalar(select(Job).where(Job.kind=='generation',Job.status=='pending')) is not None
+
+
+def test_analysis_worker_round_robins_runs_and_prioritizes_investigations(service):
+    from kineticeval.service import job_for
+    first_revision, first = setup_run(service)
+    second = service.create_run({'revision_id':first_revision,'models':[{'name':'other','backend':'fake'}]})['id']
+    with service.db.session() as session:
+        for run in (first,second):
+            for index in range(3):
+                job_for(session,run,'inspector',{'protocol':{},'run':run,'index':index})
+        job_for(session,second,'investigation',{'protocol':{},'run':second})
+    worker=Worker(service.db,analysis_only=True)
+    seen=[]
+    async def no_schedule(): pass
+    async def compute(claim):
+        seen.append((claim['payload']['run'],claim['kind']))
+        service.db.finish(claim['id'],claim['token'],result={})
+    worker.schedule=no_schedule
+    worker.execute=compute
+    async def steps():
+        for _ in range(4):await worker.step()
+    asyncio.run(steps())
+    assert seen[0]==(second,'investigation')
+    assert [run for run,kind in seen]==[second,first,second,first]
+
+
+def test_canceled_claim_never_calls_inspector_and_can_resume(service, monkeypatch):
+    from kineticeval.service import job_for
+    from kineticeval import providers
+    revision, run = setup_run(service)
+    with service.db.session() as s:
+        job_for(s,run,'inspector',{'protocol':{},'config':{'provider':'fake'}})
+    claim=service.db.claim_many(kind='inspector',run_id=run)[0]
+    service.control(run,'cancel')
+    async def unexpected(*args,**kwargs):
+        raise AssertionError('Canceled work must not call provider')
+    monkeypatch.setattr(providers,'inspector',unexpected)
+    asyncio.run(Worker(service.db).execute(claim))
+    with service.db.session() as s:
+        assert s.get(Job,claim['id']).status=='pending'
+    service.control(run,'resume')
+    assert service.db.claim_many(kind='inspector',run_id=run)
+
+
+def test_cancellation_prevents_inspector_repair_request(service, monkeypatch):
+    from kineticeval import providers
+    revision, run = setup_run(service,True)
+    worker=Worker(service.db)
+    async def prepare():
+        for _ in range(30):
+            service.schedule()
+            claims=service.db.claim_many(kinds=['generation','scoring','diagnostic','metrics'],run_id=run)
+            if not claims:break
+            await worker.execute(claims[0])
+    asyncio.run(prepare())
+    service.schedule()
+    claim=service.db.claim_many(kind='inspector',run_id=run)[0]
+    claim['payload']['config']['provider']='ucloud'
+    calls=[]
+    class Provider:
+        def __init__(self,**kwargs):pass
+        async def chat(self,*args,**kwargs):
+            calls.append(1)
+            service.control(run,'cancel')
+            return {'response':'invalid JSON','metadata':{}}
+    monkeypatch.setattr(providers,'UCloud',Provider)
+    asyncio.run(worker.execute(claim))
+    assert len(calls)==1
+    with service.db.session() as s:
+        assert s.get(Job,claim['id']).status=='pending'
+
+
+def test_metrics_do_not_wait_for_other_models(service):
+    _, run = setup_run(service)
+    claims = service.db.claim_many(kind='generation', run_id=run, limit=100)
+    for claim in claims:
+        if claim['payload']['model']['name'] == 'literal':
+            service.db.finish(claim['id'], claim['token'], result={'response': 'A'})
+    for _ in range(4):
+        service.schedule()
+        for claim in service.db.claim_many(kinds=['scoring', 'diagnostic', 'metrics'], run_id=run, limit=100):
+            asyncio.run(Worker(service.db).execute(claim))
+    result = service.results(run)
+    assert result['run']['status'] == 'active'
+    assert result['summaries'][0]['metrics']
+    assert not result['summaries'][1]['metrics']
