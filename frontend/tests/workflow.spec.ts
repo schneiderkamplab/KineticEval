@@ -61,10 +61,10 @@ test('evaluation settings are editable without JSON and save a new revision',asy
  for(const [button,field] of [['Edit prompts','Prompt template'],['Edit sampling','Maximum examples'],['Edit scoring & checks','Scoring method'],['Edit judge','Enable automatic judging and investigations']]){
   await page.getByRole('button',{name:button,exact:true}).click()
   const dialog=page.getByRole('dialog',{name:button,exact:true})
-  await expect(dialog.getByLabel(field,{exact:true})).toBeVisible()
+  await expect(dialog.getByRole(field==='Prompt template'?'textbox':field==='Maximum examples'?'spinbutton':field==='Scoring method'?'combobox':'checkbox',{name:field,exact:true})).toBeVisible()
   await expect(dialog.getByLabel('Evaluation name',{exact:true})).toHaveCount(0)
   for(const other of ['Prompt template','Maximum examples','Scoring method','Enable automatic judging and investigations']){
-   if(other!==field)await expect(dialog.getByLabel(other,{exact:true})).toBeHidden()
+   if(other!==field)await expect(dialog.getByRole(other==='Prompt template'?'textbox':other==='Maximum examples'?'spinbutton':other==='Scoring method'?'combobox':'checkbox',{name:other,exact:true})).toBeHidden()
   }
   await dialog.getByRole('button',{name:'Close',exact:true}).click()
  }
