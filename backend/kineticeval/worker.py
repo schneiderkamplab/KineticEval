@@ -26,12 +26,19 @@ def safe_error(exc):
 
 
 class Worker:
-    def __init__(self, db):
+    def __init__(self, db, analysis_only=False):
+        self.analysis_only = analysis_only
         self.db, self.service = db, Service(db)
 
     async def step(self):
         self.service.schedule()
-        claim = self.db.claim()
+        if self.analysis_only:
+            claims = self.db.claim_many(limit=64, kinds=['scoring','diagnostic','metrics'])
+            if claims:
+                await self.execute_batch(claims)
+                return True
+        claims = self.db.claim_many(limit=1, kinds=['judge','investigation','report'] if self.analysis_only else None)
+        claim = claims[0] if claims else None
         if claim is None:
             return False
         await self.execute(claim)
@@ -98,10 +105,11 @@ async def main():
     parser.add_argument('--db', default=os.environ.get('KINETICEVAL_DB', 'kineticeval.db'))
     parser.add_argument('--once', action='store_true', help='Drain available work then exit')
     parser.add_argument('--concurrency', type=int, default=1, help='Concurrent job handlers (1–32)')
+    parser.add_argument('--analysis-only', action='store_true', help='Process scoring, checks, judges and reports; leave generation to GPU workers')
     args = parser.parse_args()
     if not 1 <= args.concurrency <= 32:
         parser.error('--concurrency must be between 1 and 32')
-    worker = Worker(Database(args.db))
+    worker = Worker(Database(args.db), analysis_only=args.analysis_only)
     async def loop():
         if args.once:
             await worker.drain()

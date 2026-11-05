@@ -74,3 +74,117 @@ def test_batch_completion_rejects_stale_claim_atomically(tmp_path):
     db.finish_many(completions)
     with db.session() as session:
         assert all(session.get(Job,c['id']).status == 'succeeded' for c in claims)
+
+
+def test_auto_worker_drains_resident_weights_before_switching(tmp_path, monkeypatch):
+    import asyncio
+    import sys
+    import weakref
+    from types import SimpleNamespace
+    from kineticeval import local_hf, local_worker
+    from kineticeval.db import Database, Job
+    from kineticeval.service import Service
+    from kineticeval.fixtures import demo_definition
+    from sqlalchemy import select
+    monkeypatch.setattr(local_hf, 'pin_model', lambda model: model)
+    monkeypatch.setitem(sys.modules, 'torch', SimpleNamespace(cuda=SimpleNamespace(is_available=lambda: False)))
+    loaded, generated, references = [], [], []
+    class Engine:
+        def __init__(self, spec, *args):
+            assert all(ref() is None for ref in references), 'Previous weights must be released first'
+            self.spec = spec
+            loaded.append((spec['name'], spec['revision']))
+            references.append(weakref.ref(self))
+        def generate_batch(self, payloads):
+            assert all(p['model'] == self.spec for p in payloads)
+            generated.append((self.spec['name'], self.spec['parameters']['max_tokens']))
+            return [{'response':'A','metadata':{'output_tokens':1}} for p in payloads]
+    monkeypatch.setattr(local_worker, 'LocalModel', Engine)
+    db = Database(tmp_path/'auto.db')
+    service = Service(db)
+    revision = service.create_evaluation(demo_definition())['revision_id']
+    for name, weight, budget in [('a','v1',64), ('b','v1',64), ('a','v1',128), ('a','v2',64)]:
+        service.create_run({'revision_id':revision,'models':[{'name':name,'backend':'hf',
+            'revision':weight,'parameters':{'max_tokens':budget}}]})
+    fake = service.create_run({'revision_id':revision,'models':[{'name':'fixture','backend':'fake'}]})['id']
+    asyncio.run(local_worker.run(db, batch_size=2))
+    assert loaded == [('a','v1'), ('b','v1'), ('a','v2')]
+    assert generated[:4] == [('a',64), ('a',64), ('a',128), ('a',128)]
+    assert len(db.claim_many(kind='generation',run_id=fake,limit=10)) == 3
+    with db.session() as s:
+        assert len(s.scalars(select(Job).where(Job.kind=='generation',Job.status=='succeeded')).all()) == 12
+
+
+def test_auto_claims_are_disjoint_and_ignore_cancelled_runs(tmp_path, monkeypatch):
+    from kineticeval import local_hf
+    from kineticeval.db import Database
+    from kineticeval.service import Service
+    from kineticeval.fixtures import demo_definition
+    monkeypatch.setattr(local_hf, 'pin_model', lambda model: model)
+    db = Database(tmp_path/'claims.db')
+    service = Service(db)
+    revision = service.create_evaluation(demo_definition())['revision_id']
+    run = service.create_run({'revision_id':revision,'models':[{'name':'hf','backend':'hf'}]})['id']
+    first = db.claim_many(kind='generation',backend='hf',limit=2)
+    second = db.claim_many(kind='generation',backend='hf',limit=2)
+    assert len(first)==2 and len(second)==1
+    assert not {c['id'] for c in first} & {c['id'] for c in second}
+
+    cancelled = service.create_run({'revision_id':revision,'models':[{'name':'other','backend':'hf'}]})['id']
+    service.control(cancelled, 'cancel')
+    assert db.claim_many(kind='generation',backend='hf',limit=2) == []
+
+
+def test_load_failure_does_not_repeat_download_or_block_other_models(tmp_path, monkeypatch):
+    import asyncio
+    from kineticeval import local_hf, local_worker
+    from kineticeval.db import Database, Job
+    from kineticeval.service import Service
+    from kineticeval.fixtures import demo_definition
+    from sqlalchemy import select
+    monkeypatch.setattr(local_hf, 'pin_model', lambda model: model)
+    loads = []
+    class Engine:
+        def __init__(self, spec, *args):
+            loads.append(spec['name'])
+            if spec['name']=='bad':
+                raise ValueError('Unsupported architecture')
+            self.spec = spec
+        def generate_batch(self, payloads):
+            return [{'response':'A','metadata':{'output_tokens':1}} for p in payloads]
+    monkeypatch.setattr(local_worker, 'LocalModel', Engine)
+    db = Database(tmp_path/'failure.db')
+    service = Service(db)
+    revision = service.create_evaluation(demo_definition())['revision_id']
+    service.create_run({'revision_id':revision,'models':[{'name':name,'backend':'hf'} for name in ['bad','good']]})
+    asyncio.run(local_worker.run(db, batch_size=1))
+    assert loads == ['bad','good']
+    with db.session() as s:
+        assert len(s.scalars(select(Job).where(Job.status=='failed')).all()) == 3
+        assert len(s.scalars(select(Job).where(Job.status=='succeeded')).all()) == 3
+
+
+def test_analysis_worker_does_not_claim_generation(tmp_path):
+    import asyncio
+    from kineticeval.db import Database, Job
+    from kineticeval.service import Service
+    from kineticeval.worker import Worker
+    from kineticeval.fixtures import demo_definition
+    from sqlalchemy import select
+    db = Database(tmp_path/'analysis.db')
+    service = Service(db)
+    revision = service.create_evaluation(demo_definition())['revision_id']
+    service.create_run({'revision_id':revision,'models':[{'name':'fixture','backend':'fake'}]})
+    assert asyncio.run(Worker(db,analysis_only=True).step()) is False
+    with db.session() as s:
+        assert all(job.status=='pending' for job in s.scalars(select(Job)).all())
+
+
+def test_base_model_gets_exact_single_user_prompt():
+    import pytest
+    from types import SimpleNamespace
+    from kineticeval.local_hf import render_prompts
+    tokenizer = SimpleNamespace(chat_template=None)
+    assert render_prompts(tokenizer, [{'messages':[{'role':'user','content':'Question\nANSWER: '}]}], {}) == ['Question\nANSWER: ']
+    with pytest.raises(ValueError, match='single user'):
+        render_prompts(tokenizer, [{'messages':[{'role':'system','content':'instruction'},{'role':'user','content':'Q'}]}], {})

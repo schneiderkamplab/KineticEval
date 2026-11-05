@@ -86,12 +86,17 @@ Reference documentation: [Inspect tasks](https://inspect.aisi.org.uk/tasks.html)
 
 ## Local Hugging Face evaluation
 
-The `hf` backend runs model weights on this server; it does not send generations to a hosted API. Use a CUDA-enabled Transformers environment with support for the selected architecture. Set `CUDA_VISIBLE_DEVICES` to an authorized GPU and run one model-grouped worker per model:
+The `hf` backend runs model weights on this server; it does not send generations to a hosted API. Use a CUDA-enabled Transformers environment with support for the selected architecture. Set `CUDA_VISIBLE_DEVICES` to an authorized GPU and run one automatic model-grouped worker per allocated GPU:
 
 ```bash
-CUDA_VISIBLE_DEVICES=5 python -m kineticeval.local_worker --db kineticeval.db \
-  --model danish-foundation-models/DFM-Mimir-v1.8 --batch-size 32 --memory-fraction 0.20
+CUDA_VISIBLE_DEVICES=6 python -m kineticeval.local_worker --db kineticeval.db \
+  --batch-size 8 --memory-fraction 0.25 --watch
+python -m kineticeval.worker --analysis-only --concurrency 4
 ```
+
+The GPU worker scans all active runs for pending HF requests. It drains compatible requests for the resident weights first, including different generation parameters and chat-template arguments, then switches to the oldest queued weight/runtime configuration. Each batch still uses identical generation settings. Weight revisions, local artifacts, dtype, and context settings remain distinct. Switching releases the old model and CUDA cache before loading another. Idle workers retain their last model for reuse; continuous work for it can delay other models. Use optional `--model` only to restrict a worker deliberately. Canceled runs and other backends are excluded. Load failures are recorded and do not stop unrelated models; retry failed jobs after fixing their configuration.
+
+The analysis-only worker handles scoring, checks, metrics, configured judges and reports across all active runs; supply its UCloud environment for judging. Generation is reserved for the GPU worker.
 
 Model configurations include `revision` for HF weights, or `local_path` for an existing export. Local files receive a content digest; remote revisions resolve to commit IDs. Native chat templates, template arguments, dtype, context limits, runtime versions, token counts, and stop reasons are recorded. Inputs exceeding the context budget fail explicitly rather than being truncated. HRM prefix-attention masks are preserved when the model configuration enables them.
 
@@ -113,7 +118,7 @@ Open **Experiments**, choose a judge recommendation, select a baseline model and
 
 The comparison panel matches example ID and repeat for the selected model. It reports coverage, original and follow-up scores on scored pairs, paired score differences, and truncation counts. Incomplete pairs do not contribute to score changes. New local generations also retain raw decoded output with special tokens and token IDs; older cached generations may lack these fields.
 
-Workers still execute queued work. A local GPU worker can wait with `--watch` and reuse loaded weights across parameter/template-argument arms. Run `python scripts/analyze_experiments.py` in the pinned CPU environment to process approved runs and their configured judges; it requests the inference credential without storing it in files. The current Gemma worker waits on GPU 6 with batch size 8 and a 0.25 memory fraction. No follow-up inference occurs until approval.
+Workers still execute queued work. A local GPU worker can wait with `--watch` and reuse loaded weights across parameter/template-argument arms. Run `python scripts/analyze_experiments.py` in the pinned CPU environment to process approved runs and their configured judges; it requests the inference credential without storing it in files. The automatic local worker waits on GPU 6 with batch size 8 and a 0.25 memory fraction. No follow-up inference occurs until approval.
 
 ## Experiment validation and judge cache provenance
 

@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react'
 import {api} from './api'
 type Row=Record<string,any>
-const labels:Record<string,string>={generation:'Generating responses',generating:'Generating responses · model ready',preparing_model:'Preparing model · downloading missing files / loading weights',scoring:'Scoring',diagnostic:'Heuristic checks',judge:'LLM judging',metrics:'Computing metrics',investigation:'Investigating patterns',report:'Writing report'}
+const labels:Record<string,string>={generation:'Generating responses',generating:'Generating responses · model ready',unloading_model:'Unloading previous model',preparing_model:'Preparing model · downloading missing files / loading weights',scoring:'Scoring',diagnostic:'Heuristic checks',judge:'LLM judging',metrics:'Computing metrics',investigation:'Investigating patterns',report:'Writing report'}
 function Counts({value,label}:{value:Row;label:string}){
  const counts=value.counts,done=counts.succeeded||0,failed=counts.failed||0
  return <div className="stage-progress"><div><span>{label}</span><strong>{done.toLocaleString()} / {value.total.toLocaleString()}</strong></div><progress aria-label={label} max={value.total||1} value={done}/><small>{failed>0&&<span className="progress-failed">{failed} failed · </span>}{counts.running||0} running · {(counts.pending||0)+(counts.waiting||0)} waiting{value.dynamic?' · scheduled so far':''}</small></div>

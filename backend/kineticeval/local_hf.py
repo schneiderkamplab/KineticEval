@@ -35,6 +35,24 @@ def pin_model(model):
     return model
 
 
+def runtime_identity(spec):
+    # Generation parameters and chat formatting do not require reloading weights.
+    return {key: value for key, value in spec.items() if key not in {'parameters', 'chat_template_kwargs'}}
+
+
+def render_prompts(tokenizer, payloads, spec):
+    if tokenizer.chat_template:
+        return [tokenizer.apply_chat_template(payload['messages'], tokenize=False, add_generation_prompt=True,
+            **spec.get('chat_template_kwargs', {'enable_thinking': False})) for payload in payloads]
+    prompts = []
+    for payload in payloads:
+        messages = payload['messages']
+        if len(messages) != 1 or messages[0]['role'] != 'user':
+            raise ValueError('Model has no chat template; only a single user prompt can be passed unchanged')
+        prompts.append(messages[0]['content'])
+    return prompts
+
+
 class LocalModel:
     def __init__(self, spec, device='cuda:0', memory_fraction=.20):
         import torch
@@ -67,8 +85,7 @@ class LocalModel:
         parameters = payloads[0]['model']['parameters']
         if any(p['model'] != payloads[0]['model'] for p in payloads):
             raise ValueError('A local batch must use identical model configuration')
-        prompts = [self.tokenizer.apply_chat_template(p['messages'], tokenize=False, add_generation_prompt=True,
-            **self.spec.get('chat_template_kwargs', {'enable_thinking': False})) for p in payloads]
+        prompts = render_prompts(self.tokenizer, payloads, self.spec)
         inputs = self.tokenizer(prompts, add_special_tokens=False, padding=True, return_tensors='pt')
         lengths = inputs['attention_mask'].sum(dim=1).tolist()
         budget = parameters.get('max_tokens', 64)
@@ -97,7 +114,8 @@ class LocalModel:
                 **self.runtime, 'raw_response': self.tokenizer.decode(ids, skip_special_tokens=False),
                 'generated_token_ids': ids, 'rendered_chat_prompt': prompt, 'input_tokens': length, 'output_tokens': len(ids),
                 'finish_reason': 'stop' if ids and ids[-1] in eos else 'length',
-                'chat_template_sha256': hashlib.sha256(self.tokenizer.chat_template.encode()).hexdigest(),
+                'chat_template_sha256': hashlib.sha256(self.tokenizer.chat_template.encode()).hexdigest() if self.tokenizer.chat_template else None,
+                'prompt_format': 'chat_template' if self.tokenizer.chat_template else 'plain_text',
                 'chat_template_kwargs': self.spec.get('chat_template_kwargs', {})}})
         return results
 

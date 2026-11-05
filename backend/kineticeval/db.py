@@ -152,7 +152,7 @@ class Database:
         claims = self.claim_many(lease_seconds=lease_seconds)
         return claims[0] if claims else None
 
-    def claim_many(self, kind=None, model=None, limit=1, lease_seconds=300, run_id=None):
+    def claim_many(self, kind=None, model=None, limit=1, lease_seconds=300, run_id=None, backend=None, preferred_spec=None, kinds=None):
         from sqlalchemy import select
         now = time.time()
         with self.session(immediate=True) as s:
@@ -166,10 +166,25 @@ class Database:
             query = select(Job).join(RunJob, RunJob.job_id == Job.id).join(Run, Run.id == RunJob.run_id).where(Job.status == 'pending', Run.status == 'active')
             if run_id:
                 query = query.where(Run.id == run_id)
+            if kinds is not None:
+                query = query.where(Job.kind.in_(kinds))
             if kind:
                 query = query.where(Job.kind == kind)
             if model:
                 query = query.where(Job.model == model)
+            if backend:
+                query = query.where(Job.payload['model']['backend'].as_string() == backend)
+            if kind == 'generation' and backend == 'hf':
+                import json
+                from sqlalchemy import func
+                from .local_hf import runtime_identity
+                specs = s.execute(query.with_only_columns(Job.payload['model'], func.min(Job.created))
+                    .group_by(Job.payload['model']).order_by(func.min(Job.created))).all()
+                if not specs:
+                    return []
+                chosen = next((spec for spec, _ in specs if preferred_spec is not None
+                    and runtime_identity(spec) == runtime_identity(preferred_spec)), specs[0][0])
+                query = query.where(func.json(Job.payload['model']) == func.json(json.dumps(chosen)))
             jobs = s.scalars(query.distinct().order_by(Job.created).limit(limit)).all()
             if not jobs:
                 return []
