@@ -58,6 +58,16 @@ test('evaluation settings are editable without JSON and save a new revision',asy
  await expect(page.getByLabel('Evaluation overview')).toBeVisible()
  await expect(page.getByText('Multiple-choice QA',{exact:true})).toBeVisible()
  await expect(page.locator('pre')).toHaveCount(0)
+ for(const [button,field] of [['Edit prompts','Prompt template'],['Edit sampling','Maximum examples'],['Edit scoring & checks','Scoring method'],['Edit judge','Enable automatic judging and investigations']]){
+  await page.getByRole('button',{name:button,exact:true}).click()
+  const dialog=page.getByRole('dialog',{name:button,exact:true})
+  await expect(dialog.getByLabel(field,{exact:true})).toBeVisible()
+  await expect(dialog.getByLabel('Evaluation name',{exact:true})).toHaveCount(0)
+  for(const other of ['Prompt template','Maximum examples','Scoring method','Enable automatic judging and investigations']){
+   if(other!==field)await expect(dialog.getByLabel(other,{exact:true})).toBeHidden()
+  }
+  await dialog.getByRole('button',{name:'Close',exact:true}).click()
+ }
  await page.getByRole('button',{name:'Edit evaluation',exact:true}).click()
  await expect(page.getByLabel('Configuration patch')).toHaveCount(0)
  await page.getByLabel('Maximum examples',{exact:true}).fill('2')
