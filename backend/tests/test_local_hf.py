@@ -259,3 +259,39 @@ def test_worker_rejects_bad_prompt_without_poisoning_other_evaluations(tmp_path,
     with db.session() as session:
         assert len(session.scalars(select(Job).where(Job.status=='failed')).all()) == 1
         assert len(session.scalars(select(Job).where(Job.status=='succeeded')).all()) == 2
+
+
+def test_custom_template_is_per_configuration_and_preserves_messages():
+    from types import SimpleNamespace
+    from kineticeval.local_hf import render_prompts, runtime_identity
+    calls=[]
+    def apply(messages, **kwargs):
+        calls.append((messages, kwargs))
+        return 'Instructions\n\nQuestion'
+    tokenizer=SimpleNamespace(chat_template=None,apply_chat_template=apply)
+    template="{% for message in messages %}{{ message.content }}{% endfor %}"
+    messages=[{'role':'system','content':'Instructions'},{'role':'user','content':'Question'}]
+    spec={'name':'base','parameters':{},'chat_template':template}
+    assert render_prompts(tokenizer,[{'messages':messages}],spec)==['Instructions\n\nQuestion']
+    assert calls[0][0]==messages
+    assert calls[0][1]['chat_template']==template
+    assert tokenizer.chat_template is None
+    assert runtime_identity(spec)==runtime_identity({**spec,'chat_template':'different'})
+
+
+def test_template_changes_cache_identity_but_unset_template_preserves_old_keys(tmp_path,monkeypatch):
+    from kineticeval import local_hf
+    from kineticeval.service import Service, physical_model
+    from kineticeval.db import Database
+    from kineticeval.fixtures import demo_definition
+    monkeypatch.setattr(local_hf,'pin_model',lambda model:model)
+    spec={'name':'base','backend':'hf','parameters':{'max_tokens':64},'revision':'pinned'}
+    assert physical_model(spec)==physical_model({**spec,'chat_template':None})
+    service=Service(Database(tmp_path/'templates.db'))
+    revision=service.create_evaluation(demo_definition())['revision_id']
+    first=service.create_run({'revision_id':revision,'models':[spec]})['id']
+    second=service.create_run({'revision_id':revision,'models':[{**spec,'chat_template':'{{ messages[0].content }}'}]})['id']
+    a,b=service.results(first),service.results(second)
+    assert {i['generation']['id'] for i in a['items']}.isdisjoint({i['generation']['id'] for i in b['items']})
+    assert b['run']['config']['models'][0]['chat_template']=='{{ messages[0].content }}'
+    assert a['run']['config']['models'][0]['chat_template'] is None

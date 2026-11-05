@@ -99,6 +99,8 @@ def physical_model(spec):
     physical = dict(spec)
     physical['name'] = physical.pop('model_identifier', None) or physical['name']
     physical.pop('configuration_id', None)
+    if physical.get('chat_template') is None:
+        physical.pop('chat_template', None)
     return physical
 
 

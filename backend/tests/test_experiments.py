@@ -111,6 +111,10 @@ def test_local_worker_handles_parameter_arms_with_same_weights(tmp_path,monkeypa
         def generate_batch(self,payloads):
             observed.append(self.spec['parameters']['max_tokens'])
             return [{'response':'A','metadata':{'output_tokens':1}} for _ in payloads]
+    from types import SimpleNamespace
+    tokenizer=SimpleNamespace(chat_template=None,encode=lambda text,**kwargs:[1])
+    Engine.tokenizer=tokenizer
+    monkeypatch.setattr(local_worker,'load_tokenizer',lambda spec:tokenizer)
     monkeypatch.setattr(local_worker,'LocalModel',Engine)
     service=Service(Database(tmp_path/'local.db'))
     revision=service.create_evaluation(demo_definition())['revision_id']

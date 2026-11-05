@@ -70,3 +70,17 @@ The read-only live workload preview for the five-model WinoGrande smoke configur
 - GitHub push is blocked by missing checkout authentication. The local implementation commit is `fb2a2bb`; later diagnostic changes are separate.
 
 Prompt preflight now validates each request's supported rendering and context budget before GPU model allocation. Invalid requests fail individually; they do not prevent valid requests from the same model batch from running. Tests cover mixed valid/invalid requests and preservation of the exact valid prompt. Existing model processes are not interrupted to install this change; newly started workers use it. The user will perform the GitHub push.
+
+## Model-specific chat templates
+
+Models now offer **Prompt rendering → Use a custom chat template**, with a Jinja editor and a plain-text messages preset. The same control is available when adjusting a launch or partial rerun. The preset preserves message contents in order, with exactly two newline characters between messages, and adds no role markers or special tokens. It was verified using HRM’s actual tokenizer and a HellaSwag request.
+
+The template is frozen in the run’s model configuration, participates in generation cache identity, and is recorded through the rendered prompt and template hash in each generation artifact. Leaving the override unset preserves existing cache keys. Different templates reuse loaded weights while generating distinct responses. The live Models library includes **HRM-Text-1B · plain-text messages**; adding that configuration did not launch a new evaluation or change historical runs.
+
+## HRM runtime investigation
+
+The same eight outstanding MMLU requests completed with vLLM eager execution in 0.82 seconds (44 output tokens total), whereas the original compiled/CUDA-graph worker remained in generation for over thirty minutes. A separate one-token eager check completed in 0.10 seconds. No semantic assessment was performed by the coding agent. HRM now uses vLLM eager mode, recorded in generation metadata; other vLLM architectures retain compiled execution. The original attempt was retained as failed, its writes fenced, and the eight requests requeued through KineticEval after the worker update. Training processes were untouched.
+
+Verification after template and independent scoring changes: 110 backend tests passed, one optional live integration skipped; 17 frontend unit tests and 14 browser workflows passed. Tests cover template cache identity, historical cache preservation, frozen model settings, per-request prompt validation, model-template editing, and live Result score refresh. Publishing is handled by the user.
+
+The framework recovery completed all eight HRM generations; MMLU now has 50/50 responses generated and scored, with metrics available for all five configurations. HRM’s original run scores 0.30 under its frozen scorer. Local analysis now has an independent CPU lane so occupied inspector requests cannot delay scoring, heuristic checks, or metrics. A regression test holds all four inspector slots while confirming a new response is scored. `--cpu-only` also supports deploying that lane without interrupting existing inspector calls.

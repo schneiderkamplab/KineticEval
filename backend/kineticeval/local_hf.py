@@ -64,12 +64,20 @@ def resolve_source(spec):
 
 def runtime_identity(spec):
     # Generation parameters and chat formatting do not require reloading weights.
-    return {key: value for key, value in spec.items() if key not in {'parameters', 'chat_template_kwargs'}}
+    return {key: value for key, value in spec.items() if key not in {'parameters', 'chat_template_kwargs', 'chat_template'}}
+
+
+def effective_chat_template(tokenizer, spec):
+    template = spec.get('chat_template') or tokenizer.chat_template
+    if isinstance(template, dict):
+        template = tokenizer.get_chat_template()
+    return template
 
 
 def render_prompts(tokenizer, payloads, spec):
-    if tokenizer.chat_template:
-        return [tokenizer.apply_chat_template(payload['messages'], tokenize=False, add_generation_prompt=True,
+    template = effective_chat_template(tokenizer, spec)
+    if template:
+        return [tokenizer.apply_chat_template(payload['messages'], tokenize=False, add_generation_prompt=True, chat_template=template,
             **spec.get('chat_template_kwargs', {'enable_thinking': False})) for payload in payloads]
     prompts = []
     for payload in payloads:
@@ -158,8 +166,8 @@ class LocalModel:
                 **self.runtime, 'raw_response': self.tokenizer.decode(ids, skip_special_tokens=False),
                 'generated_token_ids': ids, 'rendered_chat_prompt': prompt, 'input_tokens': length, 'output_tokens': len(ids),
                 'finish_reason': 'stop' if ids and ids[-1] in eos else 'length',
-                'chat_template_sha256': hashlib.sha256(self.tokenizer.chat_template.encode()).hexdigest() if self.tokenizer.chat_template else None,
-                'prompt_format': 'chat_template' if self.tokenizer.chat_template else 'plain_text',
+                'chat_template_sha256': hashlib.sha256(effective_chat_template(self.tokenizer, self.spec).encode()).hexdigest() if effective_chat_template(self.tokenizer, self.spec) else None,
+                'prompt_format': 'custom_chat_template' if self.spec.get('chat_template') else 'chat_template' if self.tokenizer.chat_template else 'plain_text',
                 'chat_template_kwargs': self.spec.get('chat_template_kwargs', {})}})
         return results
 

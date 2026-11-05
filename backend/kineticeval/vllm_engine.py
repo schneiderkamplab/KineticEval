@@ -1,7 +1,9 @@
 """Offline vLLM execution using the same pinned model and rendered prompts."""
 import hashlib
 import os
-from .local_hf import local_digest, render_prompts, resolve_source
+import json
+from pathlib import Path
+from .local_hf import local_digest, render_prompts, resolve_source, effective_chat_template
 
 
 class VLLMModel:
@@ -13,11 +15,17 @@ class VLLMModel:
         source = resolve_source(spec)
         if spec.get('local_path') and local_digest(source) != spec['artifact_hash']:
             raise ValueError('Local model export changed since run creation')
+        config_path = Path(source) / 'config.json'
+        config = json.loads(config_path.read_text()) if config_path.is_file() else {}
+        # HRM graph execution stalled on a verified batch that completes in
+        # eager mode. Keep vLLM batching, without its CUDA graph/compile path.
+        self.execution_mode = 'eager' if config.get('model_type') == 'hrm_text' else 'compiled'
         self.tokenizer = AutoTokenizer.from_pretrained(source, revision=spec.get('revision'))
         self.engine = vllm.LLM(model=source, revision=spec.get('revision'), tokenizer_revision=spec.get('revision'),
             dtype=spec.get('dtype', 'bfloat16'), tensor_parallel_size=tensor_parallel_size,
             gpu_memory_utilization=memory_fraction, max_model_len=spec.get('context_limit', 4096),
             max_num_seqs=max_sequences, enable_prefix_caching=True, language_model_only=True,
+            enforce_eager=self.execution_mode == 'eager',
             compilation_config={'cudagraph_capture_sizes':[size for size in (1,2,4,8,16,32,64,128,256,512,1024) if size <= max_sequences]})
         self.version = vllm.__version__
         self.tp = tensor_parallel_size
@@ -43,13 +51,13 @@ class VLLMModel:
         for prompt, output in zip(prompts, outputs):
             answer = output.outputs[0]
             results.append({'response':answer.text, 'metadata':{
-                'engine':'vllm', 'vllm':self.version, 'tensor_parallel_size':self.tp,
+                'engine':'vllm', 'execution_mode':self.execution_mode, 'vllm':self.version, 'tensor_parallel_size':self.tp,
                 'memory_fraction':self.memory_fraction, 'dtype':self.spec.get('dtype','bfloat16'),
                 'revision':self.spec.get('revision'), 'artifact_hash':self.spec.get('artifact_hash'),
                 'input_tokens':len(output.prompt_token_ids), 'output_tokens':len(answer.token_ids),
                 'generated_token_ids':list(answer.token_ids), 'finish_reason':answer.finish_reason,
                 'rendered_chat_prompt':prompt, 'raw_response':answer.text,
-                'prompt_format':'chat_template' if self.tokenizer.chat_template else 'plain_text',
-                'chat_template_sha256':hashlib.sha256(self.tokenizer.chat_template.encode()).hexdigest() if self.tokenizer.chat_template else None,
+                'prompt_format':'custom_chat_template' if self.spec.get('chat_template') else 'chat_template' if self.tokenizer.chat_template else 'plain_text',
+                'chat_template_sha256':hashlib.sha256(effective_chat_template(self.tokenizer, self.spec).encode()).hexdigest() if effective_chat_template(self.tokenizer, self.spec) else None,
                 'chat_template_kwargs':self.spec.get('chat_template_kwargs',{})}})
         return results

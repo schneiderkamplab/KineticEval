@@ -99,10 +99,13 @@ class ModelSpec(BaseModel):
     artifact_hash: str | None = None
     dtype: Literal['bfloat16', 'float16', 'float32'] = 'bfloat16'
     context_limit: int = Field(default=4096, ge=128)
+    chat_template: str | None = Field(default=None, min_length=1)
     chat_template_kwargs: dict[str, Any] = Field(default_factory=lambda: {'enable_thinking': False})
 
     @model_validator(mode='after')
     def no_secrets(self):
+        if self.chat_template is not None and self.backend != 'hf':
+            raise ValueError('Custom chat templates are supported for local HF models')
         allowed = {'temperature', 'max_tokens', 'top_p', 'seed', 'response', 'responses', 'style'}
         if set(self.parameters) - allowed:
             raise ValueError(f'Unsupported generation parameters; allowed: {sorted(allowed)}')

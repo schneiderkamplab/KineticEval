@@ -43,13 +43,21 @@ class Worker:
                 await asyncio.to_thread(self.service.schedule)
                 self.next_schedule = time.monotonic() + 2
 
-    async def step(self):
+    async def cpu_step(self):
+        """Keep local analysis moving independently of occupied inspector slots."""
         await self.schedule()
+        claims = self.db.claim_many(limit=64, kinds=['scoring','diagnostic','metrics'])
+        if not claims:
+            return False
+        await self.execute_batch(claims)
+        return True
+
+    async def step(self):
         if self.analysis_only:
-            claims = self.db.claim_many(limit=64, kinds=['scoring','diagnostic','metrics'])
-            if claims:
-                await self.execute_batch(claims)
+            if await self.cpu_step():
                 return True
+        else:
+            await self.schedule()
         if self.analysis_only:
             from sqlalchemy import select
             from .db import Job, RunJob, Run
@@ -147,10 +155,11 @@ async def main():
     parser.add_argument('--once', action='store_true', help='Drain available work then exit')
     parser.add_argument('--concurrency', type=int, default=1, help='Concurrent job handlers (1–32)')
     parser.add_argument('--analysis-only', action='store_true', help='Process scoring, checks, inspectors and reports; leave generation to GPU workers')
+    parser.add_argument('--cpu-only', action='store_true', help='Run scoring, heuristics, and metrics without making inspector requests')
     args = parser.parse_args()
     if not 1 <= args.concurrency <= 32:
         parser.error('--concurrency must be between 1 and 32')
-    worker = Worker(Database(args.db), analysis_only=args.analysis_only)
+    worker = Worker(Database(args.db), analysis_only=args.analysis_only or args.cpu_only)
     async def loop():
         if args.once:
             await worker.drain()
@@ -158,7 +167,21 @@ async def main():
             while True:
                 if not await worker.step():
                     await asyncio.sleep(1)
-    await asyncio.gather(*(loop() for _ in range(args.concurrency)))
+    async def cpu_loop():
+        while True:
+            if not await worker.cpu_step():
+                await asyncio.sleep(1)
+    if args.cpu_only:
+        if args.once:
+            while await worker.cpu_step():
+                pass
+        else:
+            await cpu_loop()
+        return
+    loops = [loop() for _ in range(args.concurrency)]
+    if args.analysis_only and not args.once:
+        loops.append(cpu_loop())
+    await asyncio.gather(*loops)
 
 
 if __name__ == '__main__':

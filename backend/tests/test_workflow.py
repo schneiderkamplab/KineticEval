@@ -440,3 +440,20 @@ def test_metrics_do_not_wait_for_other_models(service):
     assert result['run']['status'] == 'active'
     assert result['summaries'][0]['metrics']
     assert not result['summaries'][1]['metrics']
+
+
+def test_cpu_lane_scores_while_inspector_slots_are_occupied(service):
+    from kineticeval.service import job_for
+    _, run = setup_run(service)
+    generation = service.db.claim_many(kind='generation', run_id=run, limit=1)[0]
+    service.db.finish(generation['id'], generation['token'], result={'response':'A'})
+    with service.db.session(immediate=True) as session:
+        for n in range(4):
+            job_for(session, run, 'inspector', {'config':{'provider':'fake'},'number':n})
+    inspectors = service.db.claim_many(kind='inspector', run_id=run, limit=4)
+    assert len(inspectors) == 4
+    worker = Worker(service.db, analysis_only=True)
+    assert asyncio.run(worker.cpu_step())
+    with service.db.session() as session:
+        assert session.scalar(select(Job).where(Job.kind=='scoring',Job.status=='succeeded')) is not None
+        assert all(session.get(Job, claim['id']).status=='running' for claim in inspectors)
