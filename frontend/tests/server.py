@@ -8,11 +8,12 @@ import time
 from pathlib import Path
 root = Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='kineticeval-e2e-') as directory:
-    env = {**os.environ, 'KINETICEVAL_DB': str(Path(directory)/'test.db'), 'PYTHONPATH': str(root/'backend'), 'UCLOUD_BASE_URL': 'http://127.0.0.1:9/v1', 'UCLOUD_API_KEY': 'test-only'}
+    env = {**os.environ, 'KINETICEVAL_DB': str(Path(directory)/'test.db'), 'KINETICEVAL_DEFINITIONS_DB': str(Path(directory)/'test.definitions.db'), 'PYTHONPATH': str(root/'backend'), 'UCLOUD_BASE_URL': 'http://127.0.0.1:9/v1', 'UCLOUD_API_KEY': 'test-only'}
     # Initialize once before launching independent processes.
     sys.path.insert(0, str(root/'backend'))
     from kineticeval.db import Database
-    Database(env['KINETICEVAL_DB'])
+    db = Database(env['KINETICEVAL_DB'], definitions_path=env['KINETICEVAL_DEFINITIONS_DB'])
+    db.engine.dispose()
     children = [subprocess.Popen([sys.executable, '-m', 'uvicorn', 'kineticeval.api:create_app', '--factory', '--host', '127.0.0.1', '--port', '8123'], env=env, cwd=root),
                 subprocess.Popen([sys.executable, '-m', 'kineticeval.worker'], env=env, cwd=root)]
     def stop(*args):
