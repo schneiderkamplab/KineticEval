@@ -68,6 +68,17 @@ def materialize(definition):
     return rows[:definition['sampler']['limit']] if definition['sampler']['limit'] else rows
 
 
+def definition_overview(definition):
+    rows = [{**r, **definition['overlays'].get(r['id'], {})} for r in definition['examples']]
+    total = len(rows)
+    corrected = sum(any(value != row.get(key) for key, value in definition['overlays'].get(row['id'], {}).items()) for row in definition['examples'])
+    choices = sum(bool(row['choices']) for row in rows)
+    kind = 'Multiple-choice QA' if choices == total else 'Mixed question answering' if choices else 'Yes/no QA' if definition['expected_format'] == 'yes_no' else 'Short-answer QA'
+    counts = dict(Counter(row['subset'] for row in rows))
+    included = sum(not definition['sampler']['subsets'] or row['subset'] in definition['sampler']['subsets'] for row in rows)
+    return {'total': total, 'corrected': corrected, 'selected': min(included, definition['sampler']['limit'] or included), 'subsets': counts, 'type':kind}
+
+
 def render(definition, sample):
     choices = '\n'.join(f'{chr(65+i)}. {choice}' for i, choice in enumerate(sample['choices']))
     if sample.get('messages'):
@@ -352,9 +363,9 @@ class Service:
             result = []
             for ev in s.scalars(select(Evaluation).order_by(Evaluation.created.desc())).all():
                 revisions = s.scalars(select(Revision).where(Revision.evaluation_id == ev.id).order_by(Revision.created.desc())).all()
-                result.append({'id': ev.id, 'name': ev.name, 'revisions': [{'id': r.id, 'parent_id': r.parent_id, 'created': r.created,
+                result.append({'id': ev.id, 'name': revisions[0].definition['name'] if revisions else ev.name, 'revisions': [{'id': r.id, 'parent_id': r.parent_id, 'created': r.created,
                     'definition': ({**{k:v for k,v in r.definition.items() if k != 'examples'},
-                        'example_count': len(r.definition['examples'])} if summary else r.definition)} for r in revisions]})
+                        'example_count': len(r.definition['examples']), 'overview': definition_overview(r.definition)} if summary else r.definition)} for r in revisions]})
             return result
 
     def runs(self):

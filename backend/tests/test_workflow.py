@@ -296,3 +296,21 @@ def test_library_summary_omits_examples_and_revision_loads_on_demand(service):
     detail = client.get('/api/revisions/'+rev).json()
     assert len(detail['examples']) == 3
     assert len(client.get('/api/evaluations').json()[0]['revisions'][0]['definition']['examples']) == 3
+
+
+def test_evaluation_overview_counts_actual_corrections_and_selected_subsets(service):
+    rev,_=setup_run(service)
+    new=service.revise(rev,{'overlays':{'capital':{'target':'B'},'sum':{'target':'A'}},
+        'sampler':{'limit':1,'seed':42,'subsets':['geography','science']}})['revision_id']
+    data=service.evaluations(summary=True)[0]['revisions'][0]['definition']
+    assert data['overview']=={'total':3,'corrected':1,'selected':1,
+        'subsets':{'geography':1,'arithmetic':1,'science':1},'type':'Multiple-choice QA'}
+    assert 'examples' not in data
+
+
+def test_library_name_tracks_latest_revision_without_rewriting_history(service):
+    rev,_=setup_run(service)
+    service.revise(rev,{'name':'Updated evaluation name','description':'Updated description'})
+    evaluation=service.evaluations(summary=True)[0]
+    assert evaluation['name']=='Updated evaluation name'
+    assert evaluation['revisions'][1]['definition']['name']=='QA diagnostic laboratory'
