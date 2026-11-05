@@ -131,3 +131,15 @@ def test_inspector_repairs_invalid_evidence_with_bounded_feedback(monkeypatch):
     assert len(calls) == 2
     assert 'failed validation' in calls[1][-1]['content']
     assert len(result['_provider']['attempts']) == 2
+
+
+def test_ucloud_empty_final_answer_reports_budget_without_exposing_reasoning(monkeypatch):
+    monkeypatch.setenv('UCLOUD_BASE_URL', 'https://test.invalid/v1')
+    monkeypatch.setenv('UCLOUD_API_KEY', 'fixture-key')
+    def handler(request):
+        return httpx.Response(200, json={'choices':[{'finish_reason':'length','message':{'content':None,'reasoning_content':'private reasoning'}}], 'usage':{'completion_tokens':2048}})
+    provider = UCloud(httpx.MockTransport(handler))
+    with pytest.raises(ValueError, match='output limit was reached') as error:
+        asyncio.run(provider.chat('fixture-model', [], {}))
+    assert '2048 output tokens' in str(error.value)
+    assert 'private reasoning' not in str(error.value)

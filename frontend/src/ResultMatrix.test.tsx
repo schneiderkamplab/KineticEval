@@ -26,3 +26,11 @@ it('distinguishes active work from queued and waiting models',()=>{
  rerender(<ExecutionStatus summary={{execution:{scoring:{waiting:2}}}} status="active"/>)
  expect(screen.getByText('Waiting for earlier stages')).toBeVisible()
 })
+
+it('exposes failures and distinguishes ready scores from unfinished work',()=>{
+ const {rerender}=render(<ExecutionStatus summary={{execution:{generation:{failed:2}},execution_errors:['Missing processor metadata']}} status="active"/>)
+ expect(screen.getByText('Failed · 2 jobs')).toBeVisible()
+ expect(screen.getByText('Failure details')).toBeVisible()
+ rerender(<ExecutionStatus summary={{execution:{generation:{succeeded:2}},metric_status:'succeeded'}} status="active"/>)
+ expect(screen.getByText('Scores ready · awaiting remaining run analysis')).toBeVisible()
+})

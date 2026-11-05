@@ -33,8 +33,15 @@ class UCloud:
                 raise ValueError(f'UCloud inference failed (HTTP {r.status_code}); check model and quota')
             data = r.json()
             content = data['choices'][0]['message'].get('content')
-            if not isinstance(content, str):
-                raise ValueError('Provider did not return text content')
+            if not isinstance(content, str) or not content.strip():
+                reason = data['choices'][0].get('finish_reason')
+                tokens = data.get('usage', {}).get('completion_tokens')
+                detail = f' (finish reason: {reason})' if reason in {'length','stop','content_filter','tool_calls'} else ''
+                if type(tokens) is int:
+                    detail += f'; {tokens} output tokens used'
+                if reason == 'length':
+                    detail += '; the output limit was reached before a final text answer'
+                raise ValueError('Provider did not return text content' + detail)
             return {'response': content, 'metadata': {'usage': data.get('usage'), 'model': data.get('model'), 'id': data.get('id')}}
 
 

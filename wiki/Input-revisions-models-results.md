@@ -59,3 +59,12 @@ The ten-example campaign reused earlier Transformers responses for all WinoGrand
 HRM’s HellaSwag requests contain separate system and user messages, while its tokenizer has no chat template. Those requests remain explicit failures: silently joining messages would change prompt rendering. Inspector investigation/report failures include provider timeouts and missing text responses. Original generated responses and scores remain available independently of those analysis failures.
 
 Metrics now schedule as soon as each model finishes scoring and diagnostics, without waiting for other models. Result cells show cache reuse, per-model running/queued work, and expandable execution failures. Successful regression tests do not establish that a live GPU job has completed; live campaign recovery remains separately tracked.
+
+The read-only live workload preview for the five-model WinoGrande smoke configuration found all fifty responses reusable in 3.04 seconds, with no run created. The live five-model Result rendered without JavaScript errors. vLLM initialization is now explicitly text-only for this text QA backend, avoiding unrelated multimodal encoder profiling on future engine loads. Provider failures now retain safe finish-reason and output-token diagnostics, without exposing reasoning content or automatically increasing token budgets.
+
+### Remaining operational verification
+
+- Gemma recovery produced all ten HellaSwag responses. Eight MMLU jobs encountered a separate Torch Inductor initialization error on one worker (`@jit functions should be defined in a Python file`); that failed worker was stopped and only those eight jobs retried, with other resident Gemma workers available.
+- Eight HRM MMLU requests remained in generation. GPU process monitoring confirmed compute use; completion and runtime remain unverified. Do not restart a live worker solely because polling times out.
+- HRM HellaSwag requires an explicit supported rendering choice for its system/user messages before a new attempt. Preserve the failed attempts and input provenance.
+- GitHub push is blocked by missing checkout authentication. The local implementation commit is `fb2a2bb`; later diagnostic changes are separate.
