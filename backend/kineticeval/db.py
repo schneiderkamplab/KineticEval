@@ -27,6 +27,13 @@ class Revision(Base):
     created: Mapped[float] = mapped_column(default=time.time)
 
 
+class RevisionLabel(Base):
+    """Editable display metadata, separate from immutable evaluation definitions."""
+    __tablename__ = 'revision_labels'
+    revision_id: Mapped[str] = mapped_column(primary_key=True)
+    name: Mapped[str]
+
+
 class Run(Base):
     __tablename__ = 'runs'
     id: Mapped[str] = mapped_column(primary_key=True)

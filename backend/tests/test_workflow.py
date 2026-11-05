@@ -314,3 +314,28 @@ def test_library_name_tracks_latest_revision_without_rewriting_history(service):
     evaluation=service.evaluations(summary=True)[0]
     assert evaluation['name']=='Updated evaluation name'
     assert evaluation['revisions'][1]['definition']['name']=='QA diagnostic laboratory'
+
+
+def test_revision_names_are_display_metadata(service):
+    revision, run = setup_run(service)
+    before = service.results(run)
+    assert service.name_revision(revision, '  smoke  ')['name'] == 'smoke'
+    for summary in (False, True):
+        assert service.evaluations(summary)[0]['revisions'][0]['name'] == 'smoke'
+    assert service.results(run) == before
+    child = service.revise(revision, {'description': 'Full version'})['revision_id']
+    revisions = {r['id']: r for r in service.evaluations()[0]['revisions']}
+    assert revisions[child]['name'] == ''
+    assert revisions[revision]['name'] == 'smoke'
+    service.name_revision(revision, '')
+    assert next(r for r in service.evaluations()[0]['revisions'] if r['id'] == revision)['name'] == ''
+    with pytest.raises(KeyError):
+        service.name_revision('missing', 'full')
+
+
+def test_revision_name_api(tmp_path):
+    client = TestClient(create_app(tmp_path / 'names.db'))
+    revision = client.post('/api/evaluations', json=demo_definition()).json()['revision_id']
+    assert client.post(f'/api/revisions/{revision}/name', json={'name': 'full'}).status_code == 200
+    assert client.post(f'/api/revisions/{revision}/name', json={'name': 'x' * 201}).status_code == 422
+    assert client.post('/api/revisions/missing/name', json={'name': 'full'}).status_code == 404

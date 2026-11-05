@@ -8,7 +8,7 @@ from collections import Counter
 from sqlalchemy import select
 from sqlalchemy.orm import defer
 from .core import identity
-from .db import Evaluation, Revision, Run, Item, Job, RunJob, Attempt, Proposal
+from .db import Evaluation, Revision, RevisionLabel, Run, Item, Job, RunJob, Attempt, Proposal
 from .schemas import Definition, RunRequest
 from .components import fingerprint
 
@@ -358,12 +358,24 @@ class Service:
             'total_results': len(rows), 'included_results': len(rows[:200]), 'results': rows[:200],
             'note': 'Results truncated to first 200 when necessary. Audit is stratified, not a full independent rescore.'}
 
+    def name_revision(self, revision_id, name):
+        with self.db.session() as s:
+            require(s, Revision, revision_id)
+            label = s.get(RevisionLabel, revision_id)
+            if label is None:
+                label = RevisionLabel(revision_id=revision_id, name=name.strip())
+                s.add(label)
+            else:
+                label.name = name.strip()
+            return {'revision_id': revision_id, 'name': label.name}
+
     def evaluations(self, summary=False):
         with self.db.session() as s:
+            labels = {label.revision_id: label.name for label in s.scalars(select(RevisionLabel)).all()}
             result = []
             for ev in s.scalars(select(Evaluation).order_by(Evaluation.created.desc())).all():
                 revisions = s.scalars(select(Revision).where(Revision.evaluation_id == ev.id).order_by(Revision.created.desc())).all()
-                result.append({'id': ev.id, 'name': revisions[0].definition['name'] if revisions else ev.name, 'revisions': [{'id': r.id, 'parent_id': r.parent_id, 'created': r.created,
+                result.append({'id': ev.id, 'name': revisions[0].definition['name'] if revisions else ev.name, 'revisions': [{'id': r.id, 'name': labels.get(r.id, ''), 'parent_id': r.parent_id, 'created': r.created,
                     'definition': ({**{k:v for k,v in r.definition.items() if k != 'examples'},
                         'example_count': len(r.definition['examples']), 'overview': definition_overview(r.definition)} if summary else r.definition)} for r in revisions]})
             return result

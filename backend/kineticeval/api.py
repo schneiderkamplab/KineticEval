@@ -58,6 +58,13 @@ def create_app(db_path=None):
     @app.post('/api/revisions/{revision_id}')
     def revise(revision_id: str, patch: dict): return service.revise(revision_id, patch)
 
+    class RevisionName(BaseModel):
+        name: str = Field(default='', max_length=200)
+
+    @app.post('/api/revisions/{revision_id}/name')
+    def name_revision(revision_id: str, body: RevisionName):
+        return service.name_revision(revision_id, body.name)
+
     @app.post('/api/revisions/{revision_id}/preview')
     def preview(revision_id: str, patch: dict): return service.preview(revision_id, patch)
 
