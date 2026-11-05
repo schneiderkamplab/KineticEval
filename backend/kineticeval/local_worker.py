@@ -10,8 +10,13 @@ import sys
 from pathlib import Path
 import time
 from .db import Database
-from .local_hf import LocalModel, runtime_identity, resolve_source
+from .local_hf import LocalModel, runtime_identity, resolve_source, validate_prompt_batch
 from .worker import safe_error
+
+
+def load_tokenizer(spec):
+    from transformers import AutoTokenizer
+    return AutoTokenizer.from_pretrained(resolve_source(spec))
 
 
 async def run(db, model_name=None, batch_size=16, memory_fraction=.20, watch=False, engine_kind="transformers", tp=1, runtime_id=None, adaptive=False):
@@ -45,6 +50,17 @@ async def run(db, model_name=None, batch_size=16, memory_fraction=.20, watch=Fal
             spec = claims[0]['payload']['model']
             if spec['backend'] != 'hf':
                 raise ValueError('Local worker only accepts HF generation requests')
+            db.activity(claims, 'validating_prompts')
+            if engine is not None and runtime_identity(engine.spec) == runtime_identity(spec):
+                tokenizer = engine.tokenizer
+            else:
+                tokenizer = await asyncio.to_thread(load_tokenizer, spec)
+            claims, invalid = validate_prompt_batch(tokenizer, claims, spec)
+            for rejected, error in invalid:
+                db.finish(rejected['id'], rejected['token'], error=safe_error(error))
+            if not claims:
+                continue
+
             if engine is not None and runtime_identity(engine.spec) != runtime_identity(spec):
                 db.activity(claims, 'unloading_model')
                 old_name = engine.spec['name']

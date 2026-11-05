@@ -99,6 +99,10 @@ def test_auto_worker_drains_resident_weights_before_switching(tmp_path, monkeypa
             assert all(p['model'] == self.spec for p in payloads)
             generated.append((self.spec['name'], self.spec['parameters']['max_tokens']))
             return [{'response':'A','metadata':{'output_tokens':1}} for p in payloads]
+    from types import SimpleNamespace
+    tokenizer = SimpleNamespace(chat_template=None, encode=lambda text, **kw:[1])
+    Engine.tokenizer = tokenizer
+    monkeypatch.setattr(local_worker, 'load_tokenizer', lambda spec: tokenizer)
     monkeypatch.setattr(local_worker, 'LocalModel', Engine)
     db = Database(tmp_path/'auto.db')
     service = Service(db)
@@ -152,6 +156,10 @@ def test_load_failure_does_not_repeat_download_or_block_other_models(tmp_path, m
             self.spec = spec
         def generate_batch(self, payloads):
             return [{'response':'A','metadata':{'output_tokens':1}} for p in payloads]
+    from types import SimpleNamespace
+    tokenizer = SimpleNamespace(chat_template=None, encode=lambda text, **kw:[1])
+    Engine.tokenizer = tokenizer
+    monkeypatch.setattr(local_worker, 'load_tokenizer', lambda spec: tokenizer)
     monkeypatch.setattr(local_worker, 'LocalModel', Engine)
     db = Database(tmp_path/'failure.db')
     service = Service(db)
@@ -204,3 +212,50 @@ def test_cached_weights_still_complete_processor_metadata(tmp_path, monkeypatch)
     assert calls[1]['revision'] == 'pinned'
     assert '*.json' in calls[1]['allow_patterns']
     assert '*.safetensors' not in calls[1]['allow_patterns']
+
+
+def test_prompt_preflight_isolates_invalid_requests_without_changing_valid_ones():
+    from types import SimpleNamespace
+    from kineticeval.local_hf import validate_prompt_batch
+    tokenizer = SimpleNamespace(chat_template=None, encode=lambda text, **kwargs:list(text))
+    good = {'id':'good', 'payload':{'messages':[{'role':'user','content':'Q'}]}}
+    bad = {'id':'bad', 'payload':{'messages':[{'role':'system','content':'S'},{'role':'user','content':'Q'}]}}
+    long = {'id':'long', 'payload':{'messages':[{'role':'user','content':'x'*100}]}}
+    valid, errors = validate_prompt_batch(tokenizer, [bad, good, long], {'parameters':{'max_tokens':8},'context_limit':64})
+    assert valid == [good]
+    assert [claim['id'] for claim, _ in errors] == ['bad','long']
+    assert 'single user' in str(errors[0][1])
+    assert 'no truncation' in str(errors[1][1])
+    assert good['payload']['messages'][0]['content'] == 'Q'
+
+
+def test_worker_rejects_bad_prompt_without_poisoning_other_evaluations(tmp_path, monkeypatch):
+    import asyncio
+    from types import SimpleNamespace
+    from sqlalchemy import select
+    from kineticeval import local_hf, local_worker
+    from kineticeval.db import Database, Job
+    from kineticeval.service import Service
+    from kineticeval.fixtures import demo_definition
+    monkeypatch.setattr(local_hf, 'pin_model', lambda model:model)
+    tokenizer = SimpleNamespace(chat_template=None, encode=lambda text, **kwargs:[1])
+    monkeypatch.setattr(local_worker, 'load_tokenizer', lambda spec:tokenizer)
+    loads = []
+    class Engine:
+        def __init__(self, spec, *args):
+            self.spec, self.tokenizer = spec, tokenizer
+            loads.append(spec['name'])
+        def generate_batch(self, payloads):
+            assert all(len(payload['messages']) == 1 for payload in payloads)
+            return [{'response':'A','metadata':{'output_tokens':1}} for _ in payloads]
+    monkeypatch.setattr(local_worker, 'LocalModel', Engine)
+    db = Database(tmp_path/'mixed.db');service = Service(db)
+    data = demo_definition()
+    data['examples'][0]['messages'] = [{'role':'system','content':'Instruction'},{'role':'user','content':'Q'}]
+    revision = service.create_evaluation(data)['revision_id']
+    service.create_run({'revision_id':revision,'models':[{'name':'base','backend':'hf'}]})
+    asyncio.run(local_worker.run(db, batch_size=3))
+    assert loads == ['base']
+    with db.session() as session:
+        assert len(session.scalars(select(Job).where(Job.status=='failed')).all()) == 1
+        assert len(session.scalars(select(Job).where(Job.status=='succeeded')).all()) == 2

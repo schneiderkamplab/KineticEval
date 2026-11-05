@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react'
 import {api} from './api'
 type Row=Record<string,any>
-const labels:Record<string,string>={generation:'Generating responses',generating:'Generating responses · model ready',unloading_model:'Unloading previous model',preparing_model:'Preparing model · downloading missing files / loading weights',scoring:'Scoring',diagnostic:'Heuristic checks',inspector:'LLM inspection',metrics:'Computing metrics',investigation:'Investigating patterns',report:'Writing report'}
+const labels:Record<string,string>={generation:'Generating responses',validating_prompts:'Validating prompt format and context length',generating:'Generating responses · model ready',unloading_model:'Unloading previous model',preparing_model:'Preparing model · downloading missing files / loading weights',scoring:'Scoring',diagnostic:'Heuristic checks',inspector:'LLM inspection',metrics:'Computing metrics',investigation:'Investigating patterns',report:'Writing report'}
 function Counts({value,label}:{value:Row;label:string}){
  const counts=value.counts,done=counts.succeeded||0,failed=counts.failed||0,running=counts.running||0,pending=counts.pending||0,waiting=counts.waiting||0
  const complete=done===value.total&&value.total>0

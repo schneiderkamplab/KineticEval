@@ -80,6 +80,21 @@ def render_prompts(tokenizer, payloads, spec):
     return prompts
 
 
+def validate_prompt_batch(tokenizer, claims, spec):
+    """Reject incompatible requests independently before allocating a GPU model."""
+    valid, errors = [], []
+    for claim in claims:
+        try:
+            prompt = render_prompts(tokenizer, [claim['payload']], spec)[0]
+            count = len(tokenizer.encode(prompt, add_special_tokens=False))
+            if count + spec['parameters'].get('max_tokens', 64) > spec.get('context_limit', 4096):
+                raise ValueError('Input exceeds context budget; no truncation performed')
+            valid.append(claim)
+        except Exception as exc:
+            errors.append((claim, exc))
+    return valid, errors
+
+
 class LocalModel:
     def __init__(self, spec, device='cuda:0', memory_fraction=.20, compile_model=True):
         import torch

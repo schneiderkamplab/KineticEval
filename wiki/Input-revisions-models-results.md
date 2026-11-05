@@ -68,3 +68,5 @@ The read-only live workload preview for the five-model WinoGrande smoke configur
 - Eight HRM MMLU requests remained in generation. GPU process monitoring confirmed compute use; completion and runtime remain unverified. Do not restart a live worker solely because polling times out.
 - HRM HellaSwag requires an explicit supported rendering choice for its system/user messages before a new attempt. Preserve the failed attempts and input provenance.
 - GitHub push is blocked by missing checkout authentication. The local implementation commit is `fb2a2bb`; later diagnostic changes are separate.
+
+Prompt preflight now validates each request's supported rendering and context budget before GPU model allocation. Invalid requests fail individually; they do not prevent valid requests from the same model batch from running. Tests cover mixed valid/invalid requests and preservation of the exact valid prompt. Existing model processes are not interrupted to install this change; newly started workers use it. The user will perform the GitHub push.
