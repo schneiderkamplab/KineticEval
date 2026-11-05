@@ -101,7 +101,17 @@ test('select a UCloud judge and preserve it in a new revision',async({page,reque
  await page.getByLabel('Enable automatic judging and investigations').check()
  await page.getByLabel('Available UCloud judge models').selectOption('judge/second')
  await expect(page.getByLabel('Judge model identifier')).toHaveValue('judge/second')
- await page.getByRole('button',{name:'Preview changes',exact:true}).click()
+ await expect(page.getByRole('button',{name:'Save revision',exact:true})).toBeEnabled()
+ let rejectSave=true
+ await page.route(/\/api\/revisions\/[^/]+$/,async route=>{
+  if(route.request().method()==='POST'&&rejectSave){
+   rejectSave=false
+   await route.fulfill({status:422,json:{detail:'Temporary save failure'}})
+  }else await route.continue()
+ })
+ await page.getByRole('button',{name:'Save revision',exact:true}).click()
+ await expect(page.getByRole('dialog').getByRole('alert')).toHaveText('Temporary save failure')
+ await expect(page.getByLabel('Judge model identifier')).toHaveValue('judge/second')
  await page.getByRole('button',{name:'Save revision',exact:true}).click()
  await expect(page.getByRole('dialog')).toHaveCount(0)
  await expect(page.locator('dd').filter({hasText:'judge/second'})).toBeVisible()
