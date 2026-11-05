@@ -54,3 +54,37 @@ def test_editing_collection_keeps_launch_idempotency(tmp_path):
     client.post('/api/results/'+result['id'],json={'name':'Edited','run_ids':result['run_ids'],'comparison':{'allow_mismatch':True}})
     assert client.post('/api/launches',json=body).json()['id']==result['id']
     assert len(client.get('/api/runs').json())==1
+
+
+def test_result_retry_resumes_all_runs_sharing_failures_and_preserves_success(tmp_path):
+    from sqlalchemy import select
+    from kineticeval.db import Database, Job, Run
+    from kineticeval.service import Service
+    from kineticeval.fixtures import demo_definition
+    from kineticeval.library import launch, retry_result
+    db=Database(tmp_path/'retry.db');service=Service(db)
+    revision=service.create_evaluation(demo_definition())['revision_id']
+    request={'revision_id':revision,'models':[{'name':'fake','backend':'fake'}]}
+    result=launch(service,{'name':'Shared','launch_key':'shared','runs':[request,request]})
+    with db.session() as s:
+        jobs=list(s.scalars(select(Job)))
+        jobs[0].status='failed';jobs[0].error='temporary failure'
+        failed_id=jobs[0].id
+        jobs[1].status='succeeded';jobs[1].result={'response':'preserved'}
+        success_id=jobs[1].id
+        for rid in result['run_ids']:
+            r=s.get(Run,rid);r.status='completed_with_errors'
+            r.audit={'failure_review':{'selected':['stable']}}
+    response=retry_result(service,result['id'])
+    assert response['runs_retried']==2 and response['jobs_retried']==1
+    with db.session() as s:
+        assert s.get(Job,failed_id).status=='pending'
+        assert s.get(Job,success_id).result=={'response':'preserved'}
+        for rid in result['run_ids']:
+            r=s.get(Run,rid)
+            assert r.status=='active'
+            assert r.audit=={'failure_review':{'selected':['stable']}}
+    assert retry_result(service,result['id'])['jobs_retried']==0
+    client=TestClient(create_app(tmp_path/'retry.db'))
+    assert client.post('/api/results/'+result['id']+'/retry').json()['jobs_retried']==0
+    assert client.post('/api/results/missing/retry').status_code==404

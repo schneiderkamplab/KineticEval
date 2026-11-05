@@ -83,3 +83,21 @@ def launch(service, body):
             comparison={'launch_fingerprint':fingerprint},launch_key=key,created=time.time())
         s.add(row);s.flush()
         return result_dict(row)
+
+
+def retry_result(service, result_id):
+    """Retry a snapshot of failed stages, including every affected member run."""
+    from .db import Job, RunJob
+    with service.db.session() as session:
+        collection = require(session, ResultCollection, result_id)
+        failed = session.execute(select(RunJob.run_id, Job.id)
+            .join(Job, Job.id == RunJob.job_id)
+            .where(RunJob.run_id.in_(collection.run_ids), Job.status == 'failed')).all()
+    by_run = {}
+    for run_id, job_id in failed:
+        by_run.setdefault(run_id, []).append(job_id)
+    # Capture membership before resetting shared jobs, so all affected runs resume.
+    for run_id, job_ids in by_run.items():
+        service.control(run_id, 'retry', job_ids)
+    return {'id': result_id, 'runs_retried': len(by_run),
+            'jobs_retried': len({job_id for _, job_id in failed})}

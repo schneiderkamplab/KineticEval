@@ -119,3 +119,19 @@ test('save a custom base-model chat template without JSON',async({page,request})
  await page.locator('article').filter({hasText:'Base model with plain messages'}).getByRole('button',{name:'Edit defaults'}).click()
  await expect(page.getByLabel('Custom chat template (Jinja)')).toHaveValue(template)
 })
+
+test('Result retries failed stages and reports the queued work',async({page})=>{
+ let retries=0
+ await page.route('**/api/results',route=>route.fulfill({json:[{id:'retry-result',name:'Retry Result',description:'',created:1,run_ids:[],comparison:{}}]}))
+ await page.route('**/api/results/retry-result/retry',route=>{
+  expect(route.request().method()).toBe('POST');retries++
+  return route.fulfill({json:{jobs_retried:retries===1?4:0,runs_retried:retries===1?2:0}})
+ })
+ await page.goto('/')
+ await page.getByRole('button',{name:'Results',exact:true}).click()
+ await page.getByRole('combobox',{name:'Result',exact:true}).selectOption('retry-result')
+ await page.getByRole('button',{name:'Retry failed stages',exact:true}).click()
+ await expect(page.getByRole('status')).toHaveText('Scheduled retries for 4 failed stages across 2 runs.')
+ await page.getByRole('button',{name:'Retry failed stages',exact:true}).click()
+ await expect(page.getByRole('status')).toHaveText('No failed stages to retry.')
+})

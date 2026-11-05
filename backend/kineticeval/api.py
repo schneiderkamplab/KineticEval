@@ -77,6 +77,11 @@ def create_app(db_path=None):
         from .library import launch
         return launch(service, body)
 
+    @app.post('/api/results/{result_id}/retry')
+    def retry_result(result_id: str):
+        from .library import retry_result
+        return retry_result(service, result_id)
+
     @app.post('/api/results/{result_id}')
     def edit_result(result_id: str, body: dict):
         from .library import save_result
