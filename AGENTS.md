@@ -24,7 +24,7 @@ Python source lives in `backend/kineticeval/`, pytest tests in `backend/tests/`,
 Install with `pip install -e '.[dev,inspect]'`. Run `pytest` from the repository root. In `frontend/`, use `npm run dev`, `npm run build`, and `npm run test:e2e` for development, compilation, and browser checks.
 
 ## Implementation and Configuration
-Use four-space Python indentation, snake_case functions, and focused modules. Test lifecycle invariants and meaningful behavior; external API tests must be opt-in.
+Use four-space Python indentation, snake_case functions, and focused modules. Frontend formatting uses Prettier: run `npm run format --prefix frontend` and verify with `npm run format:check --prefix frontend`. Test lifecycle invariants and meaningful behavior; external API tests must be opt-in.
 
 For the current campaign, evaluated HF models run locally within authorized GPU headroom; UCloud serves only the inspector. Never commit credentials or expose them in logs. There is no established Git history convention; use imperative commit subjects and describe changes, validation, and limitations in pull requests.
 

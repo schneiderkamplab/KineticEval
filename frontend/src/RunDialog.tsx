@@ -1,51 +1,503 @@
-import {ChatTemplateFields} from './Models'
-import {useEffect,useState} from 'react'
-import {Plus,Play,Server,Check,Trash2} from 'lucide-react'
+import { ChatTemplateFields } from './Models'
+import { useEffect, useState } from 'react'
+import { Plus, Play, Server, Check, Trash2 } from 'lucide-react'
 import Modal from './components/Modal'
-import {api,pretty,short} from './api'
-import {overview,componentName,DefinitionFields,withDefaults} from './Evaluation'
-import {demoModels,recentModels,validateModels,type Model} from './runConfig'
-type Row=Record<string,any>
-type Props={revision:Row;evaluation:Row;history:Row[];parent?:Row;exampleIds?:string[];close:()=>void;onStarted:(id:string)=>Promise<void>}
-const locationLabel=(m:Model)=>m.backend==='hf'?(m.local_path?'Local export':'Hugging Face · local GPU'):m.backend==='inspect'?'Inspect backend':'Demo fixture'
-export default function RunDialog({revision,evaluation,history,parent,exampleIds,close,onStarted}:Props){
- const [target,setTarget]=useState(revision.id),[definition,setDefinition]=useState<Row>(revision.definition)
- const matching=history.find(r=>evaluation.revisions.some((v:Row)=>v.id===r.revision_id))
- const [selected,setSelected]=useState<Model[]>(()=>structuredClone((parent?.config.models||matching?.config.models||[]).filter((m:Model)=>m.backend!=='ucloud')))
- const [known,setKnown]=useState<Model[]>(()=>recentModels(history)),[adding,setAdding]=useState(!known.length)
- const [backend,setBackend]=useState('hf'),[name,setName]=useState(''),[localPath,setLocalPath]=useState(''),[weightRevision,setWeightRevision]=useState('')
- const [fresh,setFresh]=useState(false),[repeats,setRepeats]=useState(parent?.config.repeats||1),[error,setError]=useState(''),[busy,setBusy]=useState(false),[loading,setLoading]=useState(false)
- const [advanced,setAdvanced]=useState(false)
- useEffect(()=>{if(target===revision.id){setDefinition(revision.definition);setLoading(false);return}let active=true;setLoading(true);setError('');api('/revisions/'+target).then(d=>{if(active){setDefinition(d);setLoading(false)}}).catch(e=>{if(active){setError(String(e));setLoading(false)}});return()=>{active=false}},[target,revision.id])
- const count=exampleIds?.length??overview(definition).selected
- const ready=definition.examples!==undefined&&!loading
- const idsAvailable=ready?new Set(definition.examples.filter((e:Row)=>!definition.sampler.subsets.length||definition.sampler.subsets.includes(definition.overlays?.[e.id]?.subset||e.subset)).map((e:Row)=>e.id)):new Set()
- const scopeMismatch=!!exampleIds?.some(id=>!idsAvailable.has(id))
- const validation=validateModels(selected)||(!Number.isInteger(repeats)||repeats<1||repeats>100?'Repeats must be between 1 and 100.':null)||(scopeMismatch?'Some selected examples are excluded by this revision. Choose a compatible revision.':null)
- function toggle(model:Model){setError('');setSelected(ms=>ms.some(m=>m.name===model.name)?ms.filter(m=>m.name!==model.name):[...ms,structuredClone(model)])}
- function update(index:number,patch:Row){setError('');setSelected(ms=>ms.map((m,i)=>i===index?{...m,...patch}:m))}
- function add(){
-  const model:Model={name:name.trim(),backend,parameters:{temperature:0,max_tokens:definition.source?.generation_config?.max_tokens||64}}
-  if(backend==='hf'){model.chat_template_kwargs={enable_thinking:false};model.dtype='bfloat16';model.context_limit=4096;if(localPath.trim())model.local_path=localPath.trim();if(weightRevision.trim())model.revision=weightRevision.trim()}
-  const invalid=validateModels([...selected,model]);if(invalid){setError(invalid);return}
-  setKnown(ms=>[model,...ms.filter(m=>m.name!==model.name)]);setSelected(ms=>[...ms,model]);setName('');setLocalPath('');setWeightRevision('');setAdding(false);setError('')
- }
- const request={analysis_overrides:Object.fromEntries(['generation_defaults','scorer','metrics','heuristics','inspector','expected_format'].map(k=>[k,definition[k]])),revision_id:target,models:selected,fresh,repeats,parent_id:parent?.id||null,example_ids:exampleIds||null}
- async function submit(){if(validation||!ready||busy)return;setBusy(true);setError('');try{const run=await api('/runs',request);await onStarted(run.id)}catch(e){setError(String(e instanceof Error?e.message:e));setBusy(false)}}
- return <Modal title={parent?'Rerun selected examples':'Start evaluation'} close={()=>{if(!busy)close()}} wide>
- <div className="run-context"><div><span className="eyebrow">{parent?'MATCHED EXAMPLES':'EVALUATION'}</span><h3>{definition.name}</h3><p>{componentName(definition.scorer)} · {overview(definition).type}</p></div><div className="run-scope"><strong>{count.toLocaleString()}</strong><span>{parent?'selected examples':'examples'}</span></div></div>
- {parent?<label>Evaluation revision<select aria-label="Target revision" disabled={busy||loading} value={target} onChange={e=>setTarget(e.target.value)}>{evaluation.revisions.map((r:Row,i:number)=><option key={r.id} value={r.id}>{r.name?r.name+' · ':''}{short(r.id)} · {new Date(r.created*1000).toLocaleString()}{i===0?' · latest':''}</option>)}</select></label>:<p className="muted">Revision {evaluation.revisions.find((r:Row)=>r.id===target)?.name||''} · {short(target)} · {definition.sampler.limit?'Using the configured sample':'Using all configured examples'}</p>}
- {error&&<p className="run-error" role="alert">{error}</p>}
- <section className="run-model-section"><div className="section-title"><div><h3>Models to evaluate</h3><p>Choose previously configured models or add a local model.</p></div><button disabled={busy} onClick={()=>setAdding(!adding)}><Plus size={15}/> Add model</button></div>
- {known.length>0&&<div className="model-options">{known.map(model=>{const active=selected.some(m=>m.name===model.name);return <label key={model.name} className={'model-option'+(active?' selected':'')}><input type="checkbox" checked={active} disabled={busy} onChange={()=>toggle(model)}/><Server size={17}/><span><b>{model.name}</b><small>{locationLabel(model)}</small></span>{active&&<Check size={16}/>}</label>})}</div>}
- {adding&&<div className="model-add friendly-form"><label>Model source<select value={backend} onChange={e=>setBackend(e.target.value)}><option value="hf">Local Hugging Face model or export</option><option value="inspect">Inspect model adapter</option></select></label><label>{backend==='hf'?'Hugging Face model identifier':'Inspect model identifier'}<input value={name} placeholder={backend==='hf'?'organization/model-name':'provider/model-name'} onChange={e=>setName(e.target.value)}/></label>{backend==='hf'&&<div className="form-columns"><label>Local export path (optional)<input value={localPath} placeholder="/path/to/model" onChange={e=>setLocalPath(e.target.value)}/></label><label>Weight revision (optional)<input value={weightRevision} placeholder="Resolve latest revision when queued" onChange={e=>setWeightRevision(e.target.value)}/></label></div>}<p className="field-help">Local Hugging Face models run on this server’s GPUs; Inspect models use their specified adapter. Existing model settings and pinned weights are retained when selected above.</p><button disabled={busy||!name.trim()} onClick={add}>Add to this run</button></div>}
- {!known.length&&!selected.length&&<p className="muted">No previous model configurations yet.</p>}
- {selected.map((model,index)=><details className="run-model-settings" key={model.name}><summary>{model.name}<span>{model.backend==='fake'?'Demo fixture':`${model.parameters.max_tokens??definition.source?.generation_config?.max_tokens??64} output tokens · temperature ${model.parameters.temperature??0}`}</span></summary><div className="form-columns"><label>Maximum output tokens<input disabled={busy} type="number" min={1} value={model.parameters.max_tokens??definition.source?.generation_config?.max_tokens??64} onChange={e=>update(index,{parameters:{...model.parameters,max_tokens:Number(e.target.value)}})}/></label><label>Temperature<input disabled={busy} type="number" min={0} max={2} step={.1} value={model.parameters.temperature??0} onChange={e=>update(index,{parameters:{...model.parameters,temperature:Number(e.target.value)}})}/></label></div>{model.backend==='hf'&&<label className="check"><input disabled={busy} type="checkbox" checked={model.chat_template_kwargs?.enable_thinking===true} onChange={e=>update(index,{chat_template_kwargs:{...model.chat_template_kwargs,enable_thinking:e.target.checked}})}/> Request thinking mode (if supported by the model)</label>}{model.backend==='hf'&&<ChatTemplateFields value={model} onChange={v=>update(index,v)}/>}<p className="muted">{model.local_path?`Local export: ${model.local_path}`:model.revision?`Pinned weights: ${model.revision}`:'Weights are resolved when the run is queued.'}</p><button disabled={busy} onClick={()=>setSelected(ms=>ms.filter(m=>m.name!==model.name))}><Trash2 size={14}/> Remove model</button></details>)}
- </section>
- <section className="run-policy"><h3>Generation reuse</h3><label className="check"><input type="radio" name="reuse" checked={!fresh} disabled={busy} onChange={()=>setFresh(false)}/> Reuse matching generations</label><p className="field-help">Only missing or changed requests need generation. Scoring and diagnostics use the settings shown for this run.</p><label className="check"><input type="radio" name="reuse" checked={fresh} disabled={busy} onChange={()=>setFresh(true)}/> Generate fresh responses for every example</label></section>
- <details><summary>Scoring and diagnostic settings for this run</summary><DefinitionFields value={withDefaults(definition)} section="scoring" onChange={setDefinition}/></details>
- <details><summary>LLM inspector settings for this run</summary><DefinitionFields value={withDefaults(definition)} section="inspector" onChange={setDefinition}/><p>These settings apply only to this run. The saved evaluation suggestions are unchanged.</p></details>
- <details className="run-advanced"><summary>Additional options</summary><label>Repeats per example<input disabled={busy} type="number" min={1} max={100} value={repeats} onChange={e=>setRepeats(Number(e.target.value))}/></label><button disabled={busy} onClick={()=>{setKnown(ms=>[...ms.filter(m=>!demoModels.some(d=>d.name===m.name)),...demoModels]);setSelected(structuredClone(demoModels));setAdding(false)}}>Use demo models (no real inference)</button><button onClick={()=>setAdvanced(!advanced)}>{advanced?'Hide request details':'View request details'}</button>{advanced&&<pre>{pretty(request)}</pre>}</details>
- <footer className="run-footer"><div><strong>{selected.length} model{selected.length===1?'':'s'} × {count.toLocaleString()} examples{repeats!==1?` × ${repeats} repeats`:''}</strong><span>{(selected.length*count*repeats).toLocaleString()} response slots · {fresh?'fresh generation':'reuse enabled'}</span><small>New work is queued for the evaluation workers.</small>{validation&&selected.length>0&&<p className="run-error">{validation}</p>}</div><div className="actions"><button disabled={busy} onClick={close}>Cancel</button><button className="primary" disabled={busy||loading||!ready||!!validation} onClick={()=>void submit()}><Play size={15}/>{busy?'Starting…':'Start run'}</button></div></footer>
- </Modal>
+import { api, pretty, short } from './api'
+import { overview, componentName, DefinitionFields, withDefaults } from './Evaluation'
+import { demoModels, recentModels, validateModels, type Model } from './runConfig'
+type Row = Record<string, any>
+type Props = {
+  revision: Row
+  evaluation: Row
+  history: Row[]
+  parent?: Row
+  exampleIds?: string[]
+  close: () => void
+  onStarted: (id: string) => Promise<void>
+}
+const locationLabel = (m: Model) =>
+  m.backend === 'hf'
+    ? m.local_path
+      ? 'Local export'
+      : 'Hugging Face · local GPU'
+    : m.backend === 'inspect'
+      ? 'Inspect backend'
+      : 'Demo fixture'
+export default function RunDialog({
+  revision,
+  evaluation,
+  history,
+  parent,
+  exampleIds,
+  close,
+  onStarted,
+}: Props) {
+  const [target, setTarget] = useState(revision.id),
+    [definition, setDefinition] = useState<Row>(revision.definition)
+  const matching = history.find((r) =>
+    evaluation.revisions.some((v: Row) => v.id === r.revision_id),
+  )
+  const [selected, setSelected] = useState<Model[]>(() =>
+    structuredClone(
+      (parent?.config.models || matching?.config.models || []).filter(
+        (m: Model) => m.backend !== 'ucloud',
+      ),
+    ),
+  )
+  const [known, setKnown] = useState<Model[]>(() => recentModels(history)),
+    [adding, setAdding] = useState(!known.length)
+  const [backend, setBackend] = useState('hf'),
+    [name, setName] = useState(''),
+    [localPath, setLocalPath] = useState(''),
+    [weightRevision, setWeightRevision] = useState('')
+  const [fresh, setFresh] = useState(false),
+    [repeats, setRepeats] = useState(parent?.config.repeats || 1),
+    [error, setError] = useState(''),
+    [busy, setBusy] = useState(false),
+    [loading, setLoading] = useState(false)
+  const [advanced, setAdvanced] = useState(false)
+  useEffect(() => {
+    if (target === revision.id) {
+      setDefinition(revision.definition)
+      setLoading(false)
+      return
+    }
+    let active = true
+    setLoading(true)
+    setError('')
+    api('/revisions/' + target)
+      .then((d) => {
+        if (active) {
+          setDefinition(d)
+          setLoading(false)
+        }
+      })
+      .catch((e) => {
+        if (active) {
+          setError(String(e))
+          setLoading(false)
+        }
+      })
+    return () => {
+      active = false
+    }
+  }, [target, revision.id])
+  const count = exampleIds?.length ?? overview(definition).selected
+  const ready = definition.examples !== undefined && !loading
+  const idsAvailable = ready
+    ? new Set(
+        definition.examples
+          .filter(
+            (e: Row) =>
+              !definition.sampler.subsets.length ||
+              definition.sampler.subsets.includes(definition.overlays?.[e.id]?.subset || e.subset),
+          )
+          .map((e: Row) => e.id),
+      )
+    : new Set()
+  const scopeMismatch = !!exampleIds?.some((id) => !idsAvailable.has(id))
+  const validation =
+    validateModels(selected) ||
+    (!Number.isInteger(repeats) || repeats < 1 || repeats > 100
+      ? 'Repeats must be between 1 and 100.'
+      : null) ||
+    (scopeMismatch
+      ? 'Some selected examples are excluded by this revision. Choose a compatible revision.'
+      : null)
+  function toggle(model: Model) {
+    setError('')
+    setSelected((ms) =>
+      ms.some((m) => m.name === model.name)
+        ? ms.filter((m) => m.name !== model.name)
+        : [...ms, structuredClone(model)],
+    )
+  }
+  function update(index: number, patch: Row) {
+    setError('')
+    setSelected((ms) => ms.map((m, i) => (i === index ? { ...m, ...patch } : m)))
+  }
+  function add() {
+    const model: Model = {
+      name: name.trim(),
+      backend,
+      parameters: {
+        temperature: 0,
+        max_tokens: definition.source?.generation_config?.max_tokens || 64,
+      },
+    }
+    if (backend === 'hf') {
+      model.chat_template_kwargs = { enable_thinking: false }
+      model.dtype = 'bfloat16'
+      model.context_limit = 4096
+      if (localPath.trim()) model.local_path = localPath.trim()
+      if (weightRevision.trim()) model.revision = weightRevision.trim()
+    }
+    const invalid = validateModels([...selected, model])
+    if (invalid) {
+      setError(invalid)
+      return
+    }
+    setKnown((ms) => [model, ...ms.filter((m) => m.name !== model.name)])
+    setSelected((ms) => [...ms, model])
+    setName('')
+    setLocalPath('')
+    setWeightRevision('')
+    setAdding(false)
+    setError('')
+  }
+  const request = {
+    analysis_overrides: Object.fromEntries(
+      [
+        'generation_defaults',
+        'scorer',
+        'metrics',
+        'heuristics',
+        'inspector',
+        'expected_format',
+      ].map((k) => [k, definition[k]]),
+    ),
+    revision_id: target,
+    models: selected,
+    fresh,
+    repeats,
+    parent_id: parent?.id || null,
+    example_ids: exampleIds || null,
+  }
+  async function submit() {
+    if (validation || !ready || busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const run = await api('/runs', request)
+      await onStarted(run.id)
+    } catch (e) {
+      setError(String(e instanceof Error ? e.message : e))
+      setBusy(false)
+    }
+  }
+  return (
+    <Modal
+      title={parent ? 'Rerun selected examples' : 'Start evaluation'}
+      close={() => {
+        if (!busy) close()
+      }}
+      wide
+    >
+      <div className="run-context">
+        <div>
+          <span className="eyebrow">{parent ? 'MATCHED EXAMPLES' : 'EVALUATION'}</span>
+          <h3>{definition.name}</h3>
+          <p>
+            {componentName(definition.scorer)} · {overview(definition).type}
+          </p>
+        </div>
+        <div className="run-scope">
+          <strong>{count.toLocaleString()}</strong>
+          <span>{parent ? 'selected examples' : 'examples'}</span>
+        </div>
+      </div>
+      {parent ? (
+        <label>
+          Evaluation revision
+          <select
+            aria-label="Target revision"
+            disabled={busy || loading}
+            value={target}
+            onChange={(e) => setTarget(e.target.value)}
+          >
+            {evaluation.revisions.map((r: Row, i: number) => (
+              <option key={r.id} value={r.id}>
+                {r.name ? r.name + ' · ' : ''}
+                {short(r.id)} · {new Date(r.created * 1000).toLocaleString()}
+                {i === 0 ? ' · latest' : ''}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <p className="muted">
+          Revision {evaluation.revisions.find((r: Row) => r.id === target)?.name || ''} ·{' '}
+          {short(target)} ·{' '}
+          {definition.sampler.limit
+            ? 'Using the configured sample'
+            : 'Using all configured examples'}
+        </p>
+      )}
+      {error && (
+        <p className="run-error" role="alert">
+          {error}
+        </p>
+      )}
+      <section className="run-model-section">
+        <div className="section-title">
+          <div>
+            <h3>Models to evaluate</h3>
+            <p>Choose previously configured models or add a local model.</p>
+          </div>
+          <button disabled={busy} onClick={() => setAdding(!adding)}>
+            <Plus size={15} /> Add model
+          </button>
+        </div>
+        {known.length > 0 && (
+          <div className="model-options">
+            {known.map((model) => {
+              const active = selected.some((m) => m.name === model.name)
+              return (
+                <label key={model.name} className={'model-option' + (active ? ' selected' : '')}>
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    disabled={busy}
+                    onChange={() => toggle(model)}
+                  />
+                  <Server size={17} />
+                  <span>
+                    <b>{model.name}</b>
+                    <small>{locationLabel(model)}</small>
+                  </span>
+                  {active && <Check size={16} />}
+                </label>
+              )
+            })}
+          </div>
+        )}
+        {adding && (
+          <div className="model-add friendly-form">
+            <label>
+              Model source
+              <select value={backend} onChange={(e) => setBackend(e.target.value)}>
+                <option value="hf">Local Hugging Face model or export</option>
+                <option value="inspect">Inspect model adapter</option>
+              </select>
+            </label>
+            <label>
+              {backend === 'hf' ? 'Hugging Face model identifier' : 'Inspect model identifier'}
+              <input
+                value={name}
+                placeholder={backend === 'hf' ? 'organization/model-name' : 'provider/model-name'}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </label>
+            {backend === 'hf' && (
+              <div className="form-columns">
+                <label>
+                  Local export path (optional)
+                  <input
+                    value={localPath}
+                    placeholder="/path/to/model"
+                    onChange={(e) => setLocalPath(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Weight revision (optional)
+                  <input
+                    value={weightRevision}
+                    placeholder="Resolve latest revision when queued"
+                    onChange={(e) => setWeightRevision(e.target.value)}
+                  />
+                </label>
+              </div>
+            )}
+            <p className="field-help">
+              Local Hugging Face models run on this server’s GPUs; Inspect models use their
+              specified adapter. Existing model settings and pinned weights are retained when
+              selected above.
+            </p>
+            <button disabled={busy || !name.trim()} onClick={add}>
+              Add to this run
+            </button>
+          </div>
+        )}
+        {!known.length && !selected.length && (
+          <p className="muted">No previous model configurations yet.</p>
+        )}
+        {selected.map((model, index) => (
+          <details className="run-model-settings" key={model.name}>
+            <summary>
+              {model.name}
+              <span>
+                {model.backend === 'fake'
+                  ? 'Demo fixture'
+                  : `${model.parameters.max_tokens ?? definition.source?.generation_config?.max_tokens ?? 64} output tokens · temperature ${model.parameters.temperature ?? 0}`}
+              </span>
+            </summary>
+            <div className="form-columns">
+              <label>
+                Maximum output tokens
+                <input
+                  disabled={busy}
+                  type="number"
+                  min={1}
+                  value={
+                    model.parameters.max_tokens ??
+                    definition.source?.generation_config?.max_tokens ??
+                    64
+                  }
+                  onChange={(e) =>
+                    update(index, {
+                      parameters: { ...model.parameters, max_tokens: Number(e.target.value) },
+                    })
+                  }
+                />
+              </label>
+              <label>
+                Temperature
+                <input
+                  disabled={busy}
+                  type="number"
+                  min={0}
+                  max={2}
+                  step={0.1}
+                  value={model.parameters.temperature ?? 0}
+                  onChange={(e) =>
+                    update(index, {
+                      parameters: { ...model.parameters, temperature: Number(e.target.value) },
+                    })
+                  }
+                />
+              </label>
+            </div>
+            {model.backend === 'hf' && (
+              <label className="check">
+                <input
+                  disabled={busy}
+                  type="checkbox"
+                  checked={model.chat_template_kwargs?.enable_thinking === true}
+                  onChange={(e) =>
+                    update(index, {
+                      chat_template_kwargs: {
+                        ...model.chat_template_kwargs,
+                        enable_thinking: e.target.checked,
+                      },
+                    })
+                  }
+                />{' '}
+                Request thinking mode (if supported by the model)
+              </label>
+            )}
+            {model.backend === 'hf' && (
+              <ChatTemplateFields value={model} onChange={(v) => update(index, v)} />
+            )}
+            <p className="muted">
+              {model.local_path
+                ? `Local export: ${model.local_path}`
+                : model.revision
+                  ? `Pinned weights: ${model.revision}`
+                  : 'Weights are resolved when the run is queued.'}
+            </p>
+            <button
+              disabled={busy}
+              onClick={() => setSelected((ms) => ms.filter((m) => m.name !== model.name))}
+            >
+              <Trash2 size={14} /> Remove model
+            </button>
+          </details>
+        ))}
+      </section>
+      <section className="run-policy">
+        <h3>Generation reuse</h3>
+        <label className="check">
+          <input
+            type="radio"
+            name="reuse"
+            checked={!fresh}
+            disabled={busy}
+            onChange={() => setFresh(false)}
+          />{' '}
+          Reuse matching generations
+        </label>
+        <p className="field-help">
+          Only missing or changed requests need generation. Scoring and diagnostics use the settings
+          shown for this run.
+        </p>
+        <label className="check">
+          <input
+            type="radio"
+            name="reuse"
+            checked={fresh}
+            disabled={busy}
+            onChange={() => setFresh(true)}
+          />{' '}
+          Generate fresh responses for every example
+        </label>
+      </section>
+      <details>
+        <summary>Scoring and diagnostic settings for this run</summary>
+        <DefinitionFields
+          value={withDefaults(definition)}
+          section="scoring"
+          onChange={setDefinition}
+        />
+      </details>
+      <details>
+        <summary>LLM inspector settings for this run</summary>
+        <DefinitionFields
+          value={withDefaults(definition)}
+          section="inspector"
+          onChange={setDefinition}
+        />
+        <p>
+          These settings apply only to this run. The saved evaluation suggestions are unchanged.
+        </p>
+      </details>
+      <details className="run-advanced">
+        <summary>Additional options</summary>
+        <label>
+          Repeats per example
+          <input
+            disabled={busy}
+            type="number"
+            min={1}
+            max={100}
+            value={repeats}
+            onChange={(e) => setRepeats(Number(e.target.value))}
+          />
+        </label>
+        <button
+          disabled={busy}
+          onClick={() => {
+            setKnown((ms) => [
+              ...ms.filter((m) => !demoModels.some((d) => d.name === m.name)),
+              ...demoModels,
+            ])
+            setSelected(structuredClone(demoModels))
+            setAdding(false)
+          }}
+        >
+          Use demo models (no real inference)
+        </button>
+        <button onClick={() => setAdvanced(!advanced)}>
+          {advanced ? 'Hide request details' : 'View request details'}
+        </button>
+        {advanced && <pre>{pretty(request)}</pre>}
+      </details>
+      <footer className="run-footer">
+        <div>
+          <strong>
+            {selected.length} model{selected.length === 1 ? '' : 's'} × {count.toLocaleString()}{' '}
+            examples{repeats !== 1 ? ` × ${repeats} repeats` : ''}
+          </strong>
+          <span>
+            {(selected.length * count * repeats).toLocaleString()} response slots ·{' '}
+            {fresh ? 'fresh generation' : 'reuse enabled'}
+          </span>
+          <small>New work is queued for the evaluation workers.</small>
+          {validation && selected.length > 0 && <p className="run-error">{validation}</p>}
+        </div>
+        <div className="actions">
+          <button disabled={busy} onClick={close}>
+            Cancel
+          </button>
+          <button
+            className="primary"
+            disabled={busy || loading || !ready || !!validation}
+            onClick={() => void submit()}
+          >
+            <Play size={15} />
+            {busy ? 'Starting…' : 'Start run'}
+          </button>
+        </div>
+      </footer>
+    </Modal>
+  )
 }

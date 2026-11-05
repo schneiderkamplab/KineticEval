@@ -1,34 +1,263 @@
 import RunProgress from './RunProgress'
-import {ResultMatrix,ExecutionStatus} from './ResultMatrix'
-import {useEffect,useState} from 'react'
-import {api,short} from './api'
-import Modal from './components/Modal'
-import {ReadableValue} from './components/StructuredValue'
-type Row=Record<string,any>
-function canonical(value:any):any{return Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,canonical(value[k])])):value}
-export function comparisonKey(value:Row){return JSON.stringify(canonical([value.run.revision_id,[...value.run.manifest.ids].sort(),value.run.config.repeats,value.definition.scorer,value.definition.metrics]))}
-export function ranking(values:number[],direction:string){return [...new Set(values)].sort((a,b)=>direction==='lower'?a-b:b-a)}
-export default function Results({initialId,runs,onLaunch,openRun}:{initialId:string,runs:Row[],onLaunch:()=>void,openRun:(id:string)=>void}){
- const [rows,setRows]=useState<Row[]>([]),[selected,setSelected]=useState(initialId),[data,setData]=useState<Row[]>([]),[draft,setDraft]=useState<Row|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false)
- const [retryMessage,setRetryMessage]=useState('')
- const current=rows.find(r=>r.id===selected)
- async function refresh(){setRows(await api('/results'))}
- useEffect(()=>{setSelected(initialId)},[initialId])
- useEffect(()=>{setRetryMessage('')},[selected])
- useEffect(()=>{void refresh().catch(e=>setError(String(e)))},[])
- useEffect(()=>{let active=true;let timer:ReturnType<typeof setTimeout>;async function load(){try{const collections=await api('/results');const row=collections.find((r:Row)=>r.id===selected);const next=row?await Promise.all(row.run_ids.map((id:string)=>api('/runs/'+id+'?summary=true'))):[];if(active){setRows(collections);setData(next);setError('')}}catch(e){if(active)setError(String(e))}finally{if(active)timer=setTimeout(load,5000)}}setData([]);void load();return()=>{active=false;clearTimeout(timer)}},[selected])
- async function retryFailed(){if(!current)return;setBusy(true);setError('');setRetryMessage('');try{const result=await api('/results/'+current.id+'/retry',{});setRetryMessage(result.jobs_retried?`Scheduled retries for ${result.jobs_retried} failed stages across ${result.runs_retried} runs.`:'No failed stages to retry.');await refresh()}catch(e){setError(String(e))}finally{setBusy(false)}}
- async function save(body:Row){setBusy(true);setError('');try{const row=await api('/results'+(body.id?'/'+body.id:''),body);await refresh();setSelected(row.id);setDraft(null)}catch(e){setError(String(e))}finally{setBusy(false)}}
- const groups:Record<string,Row[]>={};for(const value of data)(groups[value.run.evaluation_id||value.definition.name]??=[]).push(value)
- return <><div className="page-heading"><div><h1>Results</h1><p>Collections of runs, with explicit comparison settings and coverage.</p></div><button onClick={onLaunch}>Create runs</button></div>{error&&<p role="alert" className="error">{error}</p>}<div className="toolbar"><label>Result<select aria-label="Result" value={selected} onChange={e=>setSelected(e.target.value)}><option value="">Select a Result</option>{rows.map(r=><option key={r.id} value={r.id}>{r.name} · {new Date(r.created*1000).toLocaleString()}</option>)}</select></label><button onClick={()=>setDraft({name:'Comparison',description:'',run_ids:[],comparison:{}})}>Group existing runs</button>{current&&<><button onClick={()=>setDraft(structuredClone(current))}>Edit collection</button><button disabled={busy} onClick={()=>void retryFailed()}>Retry failed stages</button></>}</div>{retryMessage&&<p role="status">{retryMessage}</p>}{current&&<><h2>{current.name}</h2><p>{current.description}</p><p>Created {new Date(current.created*1000).toLocaleString()} · {current.run_ids.length} runs</p><label className="check"><input type="checkbox" checked={!!current.comparison.allow_mismatch} onChange={e=>void save({...current,comparison:{...current.comparison,allow_mismatch:e.target.checked}})}/> Compare mismatched runs (explicit override)</label>{!current.run_ids.length&&<p>This Result has no runs. Add existing runs with Edit collection.</p>}</>}{current&&data.some(v=>v.run.status==='active')&&<section className="panel"><h2>Live run activity</h2>{data.filter(v=>v.run.status==='active').map(v=><section key={v.run.id}><h3>{v.definition.name} · <button className="link" onClick={()=>openRun(v.run.id)}>{short(v.run.id)}</button></h3><RunProgress id={v.run.id} status={v.run.status} compact/></section>)}</section>}{current&&data.some(v=>[v.report,...(v.investigations||[])].some(a=>a?.status==='failed'))&&<section className="panel"><h2>Analysis failures</h2><p>These failures affect investigations or reports. Completed scores remain available.</p>{data.map(v=>{const failed=[{label:'Report',artifact:v.report},...(v.investigations||[]).map((artifact:Row)=>({label:'Pattern investigation',artifact}))].filter(a=>a.artifact?.status==='failed');return failed.length>0&&<details key={v.run.id}><summary>{v.definition.name} · {failed.length} failed analysis stages</summary>{failed.map((a:any,i:number)=><p key={i}>{a.label}: {a.artifact.error}</p>)}<button className="link" onClick={()=>openRun(v.run.id)}>Inspect run {short(v.run.id)}</button></details>})}</section>}{current&&data.length>0&&<ResultMatrix groups={groups} comparison={current.comparison} comparisonKey={comparisonKey} openRun={openRun}/>} {current&&Object.entries(groups).map(([groupId,values])=>{
- const name=values[0].definition.name
- const metrics=[...new Set(values.flatMap(v=>v.summaries.flatMap((s:Row)=>Object.keys(s.metrics))))] as string[]
- const metric=current.comparison.metrics?.[groupId]||metrics[0]||'accuracy'
- const direction=current.comparison.directions?.[groupId]||(metric==='accuracy'||metric.endsWith('/accuracy')?'higher':'')
- const mismatched=new Set(values.map(comparisonKey)).size>1
- const entries=values.flatMap(v=>v.summaries.map((s:Row)=>({v,s,key:comparisonKey(v),score:s.metrics[metric]})))
- const comparable=(key:string)=>entries.filter(e=>(current.comparison.allow_mismatch||e.key===key)&&e.s.scored===e.s.total&&typeof e.score==='number').map(e=>e.score)
- const update=(field:string,value:string)=>void save({...current,comparison:{...current.comparison,[field]:{...current.comparison[field],[groupId]:value}}})
- return <section className="panel" key={name}><h2>{name}</h2>{mismatched&&<p role="alert" className="alert">{current.comparison.allow_mismatch?'Override enabled: rankings compare different inputs or scoring settings.':'These runs differ in revision, sample, repeats, scoring or metrics. Rankings are separate within matching groups.'}</p>}<div className="form-columns"><label>Metric for {name}<select value={metric} onChange={e=>update('metrics',e.target.value)}>{(metrics.length?metrics:['accuracy']).map(m=><option key={m}>{m}</option>)}</select></label><label>Better values for {name}<select value={direction} onChange={e=>update('directions',e.target.value)}><option value="">Choose direction to enable ranking</option><option value="higher">Higher is better</option><option value="lower">Lower is better</option></select></label></div><table><caption>Bold: best; underline: second-best distinct value within comparable, fully scored entries.</caption><thead><tr><th>Model / run</th><th>{metric}</th><th>Scored</th><th>Inspector assessed</th><th>Status</th></tr></thead><tbody>{entries.map(({v,s,key,score})=>{const order=ranking(comparable(key),direction);const rank=direction&&s.scored===s.total?order.indexOf(score):-1;const text=typeof score==='number'?score.toFixed(4):'Pending';return <tr key={v.run.id+s.model}><td>{s.model}<br/><button className="link" onClick={()=>openRun(v.run.id)}>{short(v.run.id)} · revision {short(v.run.revision_id)}</button></td><td>{rank===0?<strong>{text}</strong>:rank===1?<u>{text}</u>:text}</td><td>{s.scored}/{s.total}</td><td>{s.inspector_assessed}/{s.total}</td><td><ExecutionStatus summary={s} status={v.run.status}/>{s.metric_errors.map((e:string)=><p role="alert" key={e}>{e}</p>)}</td></tr>})}</tbody></table><h3>{metric} by model and run</h3>{entries.map(({v,s,score})=><div key={v.run.id+s.model}><span>{s.model} · {short(v.run.id)}: {typeof score==='number'?score.toFixed(4):'Pending'}</span>{typeof score==='number'&&<meter style={{width:'100%'}} aria-label={`${s.model} ${short(v.run.id)} ${metric}`} min={Math.min(0,...entries.filter(e=>typeof e.score==='number').map(e=>e.score))} max={Math.max(1,...entries.filter(e=>typeof e.score==='number').map(e=>e.score))} value={score}/>}</div>)}<h3>Response outcomes</h3>{entries.map(({v,s})=>{const correct=s.scored_correct;const incorrect=s.scored-correct,unscored=s.total-s.scored;return <div key={v.run.id+s.model}><p>{s.model} · {short(v.run.id)}: {correct} scored correct · {incorrect} scored incorrect · {unscored} unscored</p><div className="outcome-stack" role="img" aria-label={`${correct} scored correct, ${incorrect} scored incorrect, ${unscored} unscored`}><span style={{width:`${100*correct/s.total}%`,background:'#5d8c4d'}}/><span style={{width:`${100*incorrect/s.total}%`,background:'#bf745a'}}/><span style={{width:`${100*unscored/s.total}%`,background:'#b9bdc2'}}/></div></div>})}<details><summary>Compare inputs and scoring settings</summary>{values.map(v=><section key={v.run.id}><h4>Run {short(v.run.id)}</h4><ReadableValue value={{revision:v.run.revision_id,sample_ids:v.run.manifest.ids,repeats:v.run.config.repeats,scorer:v.definition.scorer,metrics:v.definition.metrics}}/></section>)}</details></section>
- })}{draft&&<Modal title="Edit Result collection" close={()=>{if(!busy)setDraft(null)}}>{error&&<p role="alert">{error}</p>}<label>Result name<input value={draft.name} onChange={e=>setDraft({...draft,name:e.target.value})}/></label><label>Description<textarea value={draft.description} onChange={e=>setDraft({...draft,description:e.target.value})}/></label>{runs.map(r=><label className="check" key={r.id}><input type="checkbox" checked={draft.run_ids.includes(r.id)} onChange={e=>setDraft({...draft,run_ids:e.target.checked?[...draft.run_ids,r.id]:draft.run_ids.filter((id:string)=>id!==r.id)})}/>{short(r.id)} · {r.config.models.map((m:Row)=>m.name).join(', ')} · {r.status}</label>)}<p>Removing runs here only changes collection membership.</p><button disabled={busy||!draft.name.trim()} onClick={()=>void save(draft)}>Save collection</button>{draft.id&&<button className="danger" disabled={busy} onClick={()=>void fetch('/api/results/'+draft.id,{method:'DELETE'}).then(async response=>{if(!response.ok)throw new Error('Could not delete collection');setDraft(null);setSelected('');await refresh()}).catch(e=>setError(String(e)))}>Delete collection only</button>}</Modal>}</>
+import { ResultMatrix } from './ResultMatrix'
+import { useEffect, useState } from 'react'
+import { api, short } from './api'
+import ResultCollectionDialog from './ResultCollectionDialog'
+import { comparisonKey } from './resultComparison'
+export { comparisonKey, ranking } from './resultComparison'
+import ResultEvaluation from './ResultEvaluation'
+import { useResultData } from './hooks/useResultData'
+type Row = Record<string, any>
+
+export default function Results({
+  initialId,
+  runs,
+  onLaunch,
+  openRun,
+}: {
+  initialId: string
+  runs: Row[]
+  onLaunch: () => void
+  openRun: (id: string) => void
+}) {
+  const [selected, setSelected] = useState(initialId),
+    [draft, setDraft] = useState<Row | null>(null),
+    [error, setError] = useState(''),
+    [busy, setBusy] = useState(false)
+  const [retryMessage, setRetryMessage] = useState('')
+  const { rows, data, error: loadError, refresh } = useResultData(selected)
+  const current = rows.find((r) => r.id === selected)
+  useEffect(() => {
+    setSelected(initialId)
+  }, [initialId])
+  useEffect(() => {
+    setRetryMessage('')
+    setError('')
+  }, [selected])
+  async function retryFailed() {
+    if (!current) return
+    setBusy(true)
+    setError('')
+    setRetryMessage('')
+    try {
+      const result = await api('/results/' + current.id + '/retry', {})
+      setRetryMessage(
+        result.jobs_retried
+          ? `Scheduled retries for ${result.jobs_retried} failed stages across ${result.runs_retried} runs.`
+          : 'No failed stages to retry.',
+      )
+      refresh()
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  async function save(body: Row) {
+    setBusy(true)
+    setError('')
+    try {
+      const row = await api('/results' + (body.id ? '/' + body.id : ''), body)
+      refresh()
+      setSelected(row.id)
+      setDraft(null)
+    } catch (e) {
+      setError(String(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+  async function removeCollection() {
+    if (!draft?.id) return
+    setBusy(true)
+    setError('')
+    try {
+      const response = await fetch('/api/results/' + draft.id, { method: 'DELETE' })
+      if (!response.ok) throw new Error('Could not delete collection')
+      setDraft(null)
+      setSelected('')
+      refresh()
+    } catch (error) {
+      setError(String(error))
+    } finally {
+      setBusy(false)
+    }
+  }
+  const groups: Record<string, Row[]> = {}
+  for (const value of data)
+    (groups[value.run.evaluation_id || value.definition.name] ??= []).push(value)
+  return (
+    <>
+      <div className="page-heading">
+        <div>
+          <h1>Results</h1>
+          <p>Collections of runs, with explicit comparison settings and coverage.</p>
+        </div>
+        <button onClick={onLaunch}>Create runs</button>
+      </div>
+      {(error || loadError) && (
+        <p role="alert" className="error">
+          {error || loadError}
+        </p>
+      )}
+      <div className="toolbar">
+        <label>
+          Result
+          <select
+            disabled={busy}
+            aria-label="Result"
+            value={selected}
+            onChange={(e) => setSelected(e.target.value)}
+          >
+            <option value="">Select a Result</option>
+            {rows.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.name} · {new Date(r.created * 1000).toLocaleString()}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button
+          onClick={() =>
+            setDraft({ name: 'Comparison', description: '', run_ids: [], comparison: {} })
+          }
+        >
+          Group existing runs
+        </button>
+        {current && (
+          <>
+            <button disabled={busy} onClick={() => setDraft(structuredClone(current))}>
+              Edit collection
+            </button>
+            <button disabled={busy} onClick={() => void retryFailed()}>
+              Retry failed stages
+            </button>
+          </>
+        )}
+      </div>
+      {retryMessage && <p role="status">{retryMessage}</p>}
+      {current && (
+        <>
+          <h2>{current.name}</h2>
+          <p>{current.description}</p>
+          <p>
+            Created {new Date(current.created * 1000).toLocaleString()} · {current.run_ids.length}{' '}
+            runs
+          </p>
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={!!current.comparison.allow_mismatch}
+              onChange={(e) =>
+                void save({
+                  ...current,
+                  comparison: { ...current.comparison, allow_mismatch: e.target.checked },
+                })
+              }
+            />{' '}
+            Compare mismatched runs (explicit override)
+          </label>
+          {!current.run_ids.length && (
+            <p>This Result has no runs. Add existing runs with Edit collection.</p>
+          )}
+        </>
+      )}
+      {current && data.some((v) => v.run.status === 'active') && (
+        <section className="panel">
+          <h2>Live run activity</h2>
+          {data
+            .filter((v) => v.run.status === 'active')
+            .map((v) => (
+              <section key={v.run.id}>
+                <h3>
+                  {v.definition.name} ·{' '}
+                  <button className="link" onClick={() => openRun(v.run.id)}>
+                    {short(v.run.id)}
+                  </button>
+                </h3>
+                <RunProgress id={v.run.id} status={v.run.status} compact />
+              </section>
+            ))}
+        </section>
+      )}
+      {current &&
+        data.some((v) =>
+          [v.report, ...(v.investigations || [])].some((a) => a?.status === 'failed'),
+        ) && (
+          <details className="panel result-breakdown">
+            <summary>
+              Analysis failures ·{' '}
+              {data.reduce(
+                (count, value) =>
+                  count +
+                  [value.report, ...(value.investigations || [])].filter(
+                    (artifact) => artifact?.status === 'failed',
+                  ).length,
+                0,
+              )}{' '}
+              stages
+            </summary>
+            <p>
+              These failures affect investigations or reports. Completed scores remain available.
+            </p>
+            {data.map((v) => {
+              const failed = [
+                { label: 'Report', artifact: v.report },
+                ...(v.investigations || []).map((artifact: Row) => ({
+                  label: 'Pattern investigation',
+                  artifact,
+                })),
+              ].filter((a) => a.artifact?.status === 'failed')
+              return (
+                failed.length > 0 && (
+                  <details key={v.run.id}>
+                    <summary>
+                      {v.definition.name} · {failed.length} failed analysis stages
+                    </summary>
+                    {failed.map((a: any, i: number) => (
+                      <p key={i}>
+                        {a.label}: {a.artifact.error}
+                      </p>
+                    ))}
+                    <button className="link" onClick={() => openRun(v.run.id)}>
+                      Inspect run {short(v.run.id)}
+                    </button>
+                  </details>
+                )
+              )
+            })}
+          </details>
+        )}
+      {current && data.length > 0 && (
+        <ResultMatrix
+          groups={groups}
+          comparison={current.comparison}
+          comparisonKey={comparisonKey}
+          openRun={openRun}
+        />
+      )}{' '}
+      {current &&
+        Object.entries(groups).map(([groupId, values]) => (
+          <ResultEvaluation
+            key={groupId}
+            groupId={groupId}
+            values={values}
+            comparison={current.comparison}
+            onChange={(comparison) => void save({ ...current, comparison })}
+            openRun={openRun}
+          />
+        ))}
+      {draft && (
+        <ResultCollectionDialog
+          draft={draft}
+          setDraft={setDraft}
+          runs={runs}
+          busy={busy}
+          error={error}
+          save={save}
+          removeCollection={removeCollection}
+        />
+      )}
+    </>
+  )
 }

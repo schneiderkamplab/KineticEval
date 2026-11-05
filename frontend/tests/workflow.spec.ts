@@ -1,193 +1,283 @@
-import {test,expect} from '@playwright/test'
-test('create, run two models, inspect, revise, and partially rerun',async({page,request})=>{
- await page.route('**/api/providers/ucloud/models',route=>route.fulfill({json:[]}))
- await page.goto('/')
- await expect(page.getByRole('heading',{name:'Beyond the score.'})).toBeVisible()
- await page.screenshot({path:'test-results/library.png',fullPage:true})
- await page.getByRole('button',{name:'New evaluation',exact:true}).click()
- await expect(page.getByLabel('Evaluation name')).toBeVisible()
- await expect(page.getByLabel('Evaluation definition')).toHaveCount(0)
- await page.getByLabel('Enable automatic inspection and investigations').check()
- await page.getByLabel('Inspector provider').selectOption('fake')
- await page.getByRole('button',{name:'Create evaluation',exact:true}).click()
- await expect(page.getByRole('heading',{name:'QA diagnostic laboratory'})).toBeVisible()
- await page.getByRole('button',{name:'Preview sample & prompts'}).click()
- await expect(page.getByRole('dialog',{name:'Preview sample & prompts',exact:true})).toBeVisible()
- await page.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).click()
- await page.getByRole('button',{name:'Start evaluation',exact:true}).click()
- await expect(page.getByRole('button',{name:'Discover UCloud models'})).toHaveCount(0)
- await expect(page.getByLabel('Model configurations')).toHaveCount(0)
- for(const name of ['fixture-literal','fixture-verbose'])await request.post('/api/models',{data:{name,spec:{name,backend:'fake',parameters:name==='fixture-verbose'?{style:'sentence'}:{}}}})
- await page.getByRole('dialog').getByRole('button',{name:'Close',exact:true}).click()
- await page.getByRole('button',{name:'Start evaluation',exact:true}).click()
- await page.getByRole('checkbox',{name:'fixture-literal · fixture-literal'}).check()
- await page.getByRole('checkbox',{name:'fixture-verbose · fixture-verbose'}).check()
- await page.getByRole('button',{name:'Create Result and runs'}).click()
- await expect(page.getByRole('table',{name:'Model by evaluation comparison'})).toBeVisible()
- const collection=await (await request.get('/api/results')).json()
- const runId=collection[0].run_ids[0]
- await page.getByRole('button',{name:'Run '+runId.slice(0,8),exact:true}).first().click()
- await expect(page.getByText('completed',{exact:true})).toBeVisible({timeout:30000})
- await expect(page.getByText('Fixture report:',{exact:false})).toBeVisible()
- await page.screenshot({path:'test-results/results.png',fullPage:true})
- await page.getByRole('button',{name:'Inspect capital fixture-verbose'}).click()
- await expect(page.getByRole('heading',{name:'Rendered prompt'})).toBeVisible()
- await expect(page.getByRole('dialog').getByText('The answer is A.',{exact:true}).first()).toBeVisible()
- await page.getByRole('button',{name:'Close',exact:true}).click()
- await page.getByRole('checkbox',{name:'Select planet fixture-literal'}).check()
- await page.getByRole('button',{name:'Rerun selected (1)'}).click()
- await page.getByRole('button',{name:'Start run',exact:true}).click()
- await expect(page.getByText('completed',{exact:true})).toBeVisible({timeout:30000})
- await expect(page.getByText('Partial coverage · 1 reused')).toHaveCount(2)
- await page.getByRole('button',{name:'Evaluations',exact:false}).first().click()
- await page.getByRole('button',{name:/QA diagnostic laboratory/}).click()
- await page.getByRole('row').filter({hasText:'planet'}).getByRole('button',{name:'Correct'}).click()
- await page.getByLabel('Correct answer',{exact:true}).fill('A')
- await page.getByRole('button',{name:'Preview impact'}).click()
- await page.getByRole('button',{name:'Save correction'}).click()
- await expect(page.getByText('Corrected examples',{exact:true})).toBeVisible()
- const evaluations=await (await request.get('/api/evaluations')).json()
- expect(evaluations[0].revisions).toHaveLength(2)
- expect(evaluations[0].revisions[0].definition.overlays.planet.target).toBe('A')
- const runs=await (await request.get('/api/runs')).json()
- const historical=await (await request.get('/api/runs/'+runs[0].id)).json()
- expect(historical.definition.overlays).toEqual({})
- await page.getByRole('button',{name:'Compare',exact:true}).click()
- await page.getByRole('button',{name:new RegExp(runs[0].id.slice(0,8))}).click()
- await page.getByRole('button',{name:new RegExp(runs[1].id.slice(0,8))}).click()
- await expect(page.getByRole('heading',{name:'QA diagnostic laboratory'})).toHaveCount(2)
+import { test, expect } from '@playwright/test'
+test('create, run two models, inspect, revise, and partially rerun', async ({ page, request }) => {
+  await page.route('**/api/providers/ucloud/models', (route) => route.fulfill({ json: [] }))
+  await page.goto('/')
+  await expect(page.getByRole('heading', { name: 'Beyond the score.' })).toBeVisible()
+  await page.screenshot({ path: 'test-results/library.png', fullPage: true })
+  await page.getByRole('button', { name: 'New evaluation', exact: true }).click()
+  await expect(page.getByLabel('Evaluation name')).toBeVisible()
+  await expect(page.getByLabel('Evaluation definition')).toHaveCount(0)
+  await page.getByLabel('Enable automatic inspection and investigations').check()
+  await page.getByLabel('Inspector provider').selectOption('fake')
+  await page.getByRole('button', { name: 'Create evaluation', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'QA diagnostic laboratory' })).toBeVisible()
+  await page.getByRole('button', { name: 'Preview sample & prompts' }).click()
+  await expect(
+    page.getByRole('dialog', { name: 'Preview sample & prompts', exact: true }),
+  ).toBeVisible()
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click()
+  await page.getByRole('button', { name: 'Start evaluation', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Discover UCloud models' })).toHaveCount(0)
+  await expect(page.getByLabel('Model configurations')).toHaveCount(0)
+  for (const name of ['fixture-literal', 'fixture-verbose'])
+    await request.post('/api/models', {
+      data: {
+        name,
+        spec: {
+          name,
+          backend: 'fake',
+          parameters: name === 'fixture-verbose' ? { style: 'sentence' } : {},
+        },
+      },
+    })
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).click()
+  await page.getByRole('button', { name: 'Start evaluation', exact: true }).click()
+  await page.getByRole('checkbox', { name: 'fixture-literal · fixture-literal' }).check()
+  await page.getByRole('checkbox', { name: 'fixture-verbose · fixture-verbose' }).check()
+  await page.getByRole('button', { name: 'Create Result and runs' }).click()
+  await expect(page.getByRole('table', { name: 'Model by evaluation comparison' })).toBeVisible()
+  const collection = await (await request.get('/api/results')).json()
+  const runId = collection[0].run_ids[0]
+  await page
+    .getByRole('button', { name: 'Run ' + runId.slice(0, 8), exact: true })
+    .first()
+    .click()
+  await expect(page.getByText('completed', { exact: true })).toBeVisible({ timeout: 30000 })
+  await expect(page.getByText('Fixture report:', { exact: false })).toBeVisible()
+  await page.screenshot({ path: 'test-results/results.png', fullPage: true })
+  await page.getByRole('button', { name: 'Inspect capital fixture-verbose' }).click()
+  await expect(page.getByRole('heading', { name: 'Rendered prompt' })).toBeVisible()
+  await expect(
+    page.getByRole('dialog').getByText('The answer is A.', { exact: true }).first(),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Close', exact: true }).click()
+  await page.getByRole('checkbox', { name: 'Select planet fixture-literal' }).check()
+  await page.getByRole('button', { name: 'Rerun selected (1)' }).click()
+  await page.getByRole('button', { name: 'Start run', exact: true }).click()
+  await expect(page.getByText('completed', { exact: true })).toBeVisible({ timeout: 30000 })
+  await expect(page.getByText('Partial coverage · 1 reused')).toHaveCount(2)
+  await page.getByRole('button', { name: 'Evaluations', exact: false }).first().click()
+  await page.getByRole('button', { name: /QA diagnostic laboratory/ }).click()
+  await page
+    .getByRole('row')
+    .filter({ hasText: 'planet' })
+    .getByRole('button', { name: 'Correct' })
+    .click()
+  await page.getByLabel('Correct answer', { exact: true }).fill('A')
+  await page.getByRole('button', { name: 'Preview impact' }).click()
+  await page.getByRole('button', { name: 'Save correction' }).click()
+  await expect(page.getByText('Corrected examples', { exact: true })).toBeVisible()
+  const evaluations = await (await request.get('/api/evaluations')).json()
+  expect(evaluations[0].revisions).toHaveLength(2)
+  expect(evaluations[0].revisions[0].definition.overlays.planet.target).toBe('A')
+  const runs = await (await request.get('/api/runs')).json()
+  const historical = await (await request.get('/api/runs/' + runs[0].id)).json()
+  expect(historical.definition.overlays).toEqual({})
+  await page.getByRole('button', { name: 'Compare', exact: true }).click()
+  await page.getByRole('button', { name: new RegExp(runs[0].id.slice(0, 8)) }).click()
+  await page.getByRole('button', { name: new RegExp(runs[1].id.slice(0, 8)) }).click()
+  await expect(page.getByRole('heading', { name: 'QA diagnostic laboratory' })).toHaveCount(2)
 })
 
-
-test('evaluation settings are editable without JSON and save a new revision',async({page,request})=>{
- await page.goto('/')
- await page.getByRole('button',{name:'New evaluation',exact:true}).click()
- await page.getByLabel('Evaluation name').fill('Friendly evaluation editor')
- await page.getByRole('button',{name:'Create evaluation',exact:true}).click()
- await expect(page.getByRole('heading',{name:'Friendly evaluation editor'})).toBeVisible()
- await expect(page.getByLabel('Evaluation overview')).toBeVisible()
- await expect(page.getByText('Multiple-choice QA',{exact:true})).toBeVisible()
- await expect(page.locator('pre')).toHaveCount(0)
- for(const [button,field] of [['Edit prompts','Prompt template'],['Edit sampling','Maximum examples'],['Edit scoring & checks','Scoring method'],['Edit inspector','Enable automatic inspection and investigations']]){
-  await page.getByRole('button',{name:button,exact:true}).click()
-  const dialog=page.getByRole('dialog',{name:button,exact:true})
-  await expect(dialog.getByRole(field==='Prompt template'?'textbox':field==='Maximum examples'?'spinbutton':field==='Scoring method'?'combobox':'checkbox',{name:field,exact:true})).toBeVisible()
-  await expect(dialog.getByLabel('Evaluation name',{exact:true})).toHaveCount(0)
-  for(const other of ['Prompt template','Maximum examples','Scoring method','Enable automatic inspection and investigations']){
-   if(other!==field)await expect(dialog.getByRole(other==='Prompt template'?'textbox':other==='Maximum examples'?'spinbutton':other==='Scoring method'?'combobox':'checkbox',{name:other,exact:true})).toBeHidden()
+test('evaluation settings are editable without JSON and save a new revision', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'New evaluation', exact: true }).click()
+  await page.getByLabel('Evaluation name').fill('Friendly evaluation editor')
+  await page.getByRole('button', { name: 'Create evaluation', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Friendly evaluation editor' })).toBeVisible()
+  await expect(page.getByLabel('Evaluation overview')).toBeVisible()
+  await expect(page.getByText('Multiple-choice QA', { exact: true })).toBeVisible()
+  await expect(page.locator('pre')).toHaveCount(0)
+  for (const [button, field] of [
+    ['Edit prompts', 'Prompt template'],
+    ['Edit sampling', 'Maximum examples'],
+    ['Edit scoring & checks', 'Scoring method'],
+    ['Edit inspector', 'Enable automatic inspection and investigations'],
+  ]) {
+    await page.getByRole('button', { name: button, exact: true }).click()
+    const dialog = page.getByRole('dialog', { name: button, exact: true })
+    await expect(
+      dialog.getByRole(
+        field === 'Prompt template'
+          ? 'textbox'
+          : field === 'Maximum examples'
+            ? 'spinbutton'
+            : field === 'Scoring method'
+              ? 'combobox'
+              : 'checkbox',
+        { name: field, exact: true },
+      ),
+    ).toBeVisible()
+    await expect(dialog.getByLabel('Evaluation name', { exact: true })).toHaveCount(0)
+    for (const other of [
+      'Prompt template',
+      'Maximum examples',
+      'Scoring method',
+      'Enable automatic inspection and investigations',
+    ]) {
+      if (other !== field)
+        await expect(
+          dialog.getByRole(
+            other === 'Prompt template'
+              ? 'textbox'
+              : other === 'Maximum examples'
+                ? 'spinbutton'
+                : other === 'Scoring method'
+                  ? 'combobox'
+                  : 'checkbox',
+            { name: other, exact: true },
+          ),
+        ).toBeHidden()
+    }
+    await dialog.getByRole('button', { name: 'Close', exact: true }).click()
   }
-  await dialog.getByRole('button',{name:'Close',exact:true}).click()
- }
- await page.getByRole('button',{name:'Edit evaluation inputs',exact:true}).click()
- await expect(page.getByLabel('Configuration patch')).toHaveCount(0)
- await page.getByLabel('Maximum examples',{exact:true}).fill('2')
- await page.getByLabel('System instructions').fill('Answer concisely.')
- await page.getByRole('button',{name:'Preview changes',exact:true}).click()
- const changePreview=page.getByRole('dialog',{name:'Preview changes',exact:true})
- await expect(changePreview).toBeVisible()
- await expect(changePreview.getByText(/2 examples selected/)).toBeVisible()
- await expect(page.getByRole('dialog',{name:'Edit evaluation inputs',exact:true})).toBeHidden()
- await changePreview.getByRole('button',{name:'Back to editing',exact:true}).click()
- await expect(page.getByLabel('Maximum examples',{exact:true})).toHaveValue('2')
- await expect(page.getByLabel('System instructions')).toHaveValue('Answer concisely.')
- await page.getByRole('button',{name:'Preview changes',exact:true}).click()
- await page.getByRole('dialog',{name:'Preview changes',exact:true}).press('Escape')
- await expect(page.getByRole('dialog',{name:'Edit evaluation inputs',exact:true})).toBeVisible()
- await page.getByRole('button',{name:'Save changes',exact:true}).click()
- await page.getByRole('button',{name:'Edit suggested run settings',exact:true}).click()
- await page.getByLabel('Scoring method').selectOption('normalized')
- await page.getByRole('button',{name:'Save suggestions',exact:true}).click()
- await expect(page.getByText('Normalized match',{exact:true}).first()).toBeVisible()
- const evaluations=await(await request.get('/api/evaluations')).json()
- const evaluation=evaluations.find((e:any)=>e.name==='Friendly evaluation editor')
- expect(evaluation.revisions).toHaveLength(2)
- expect(evaluation.revisions[0].definition.sampler.limit).toBe(2)
- expect(evaluation.revisions[0].definition.system_prompt).toBe('Answer concisely.')
- expect(evaluation.revisions[1].definition.system_prompt).toBe('')
- await page.screenshot({path:'test-results/evaluation-overview.png',fullPage:true})
+  await page.getByRole('button', { name: 'Edit evaluation inputs', exact: true }).click()
+  await expect(page.getByLabel('Configuration patch')).toHaveCount(0)
+  await page.getByLabel('Maximum examples', { exact: true }).fill('2')
+  await page.getByLabel('System instructions').fill('Answer concisely.')
+  await page.getByRole('button', { name: 'Preview changes', exact: true }).click()
+  const changePreview = page.getByRole('dialog', { name: 'Preview changes', exact: true })
+  await expect(changePreview).toBeVisible()
+  await expect(changePreview.getByText(/2 examples selected/)).toBeVisible()
+  await expect(
+    page.getByRole('dialog', { name: 'Edit evaluation inputs', exact: true }),
+  ).toBeHidden()
+  await changePreview.getByRole('button', { name: 'Back to editing', exact: true }).click()
+  await expect(page.getByLabel('Maximum examples', { exact: true })).toHaveValue('2')
+  await expect(page.getByLabel('System instructions')).toHaveValue('Answer concisely.')
+  await page.getByRole('button', { name: 'Preview changes', exact: true }).click()
+  await page.getByRole('dialog', { name: 'Preview changes', exact: true }).press('Escape')
+  await expect(
+    page.getByRole('dialog', { name: 'Edit evaluation inputs', exact: true }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit suggested run settings', exact: true }).click()
+  await page.getByLabel('Scoring method').selectOption('normalized')
+  await page.getByRole('button', { name: 'Save suggestions', exact: true }).click()
+  await expect(page.getByText('Normalized match', { exact: true }).first()).toBeVisible()
+  const evaluations = await (await request.get('/api/evaluations')).json()
+  const evaluation = evaluations.find((e: any) => e.name === 'Friendly evaluation editor')
+  expect(evaluation.revisions).toHaveLength(2)
+  expect(evaluation.revisions[0].definition.sampler.limit).toBe(2)
+  expect(evaluation.revisions[0].definition.system_prompt).toBe('Answer concisely.')
+  expect(evaluation.revisions[1].definition.system_prompt).toBe('')
+  await page.screenshot({ path: 'test-results/evaluation-overview.png', fullPage: true })
 })
 
-test('select a UCloud inspector and preserve it in a new revision',async({page,request})=>{
- await page.route('**/api/providers/ucloud/models',route=>route.fulfill({json:['inspector/first','inspector/second']}))
- await page.goto('/')
- await page.getByRole('button',{name:'New evaluation',exact:true}).click()
- await page.getByLabel('Evaluation name').fill('Inspector selection')
- await page.getByRole('button',{name:'Create evaluation',exact:true}).click()
- await page.getByRole('button',{name:'Edit inspector',exact:true}).click()
- await page.getByLabel('Enable automatic inspection and investigations').check()
- await page.getByLabel('Available UCloud inspector models').selectOption('inspector/second')
- await expect(page.getByLabel('Inspector model identifier')).toHaveValue('inspector/second')
- await expect(page.getByRole('button',{name:'Save suggestions',exact:true})).toBeEnabled()
- let rejectSave=true
- await page.route(/\/api\/revisions\/[^/]+$/,async route=>{
-  if(route.request().method()==='POST'&&rejectSave){
-   rejectSave=false
-   await route.fulfill({status:422,json:{detail:'Temporary save failure'}})
-  }else await route.continue()
- })
- await page.getByRole('button',{name:'Save suggestions',exact:true}).click()
- await expect(page.getByRole('dialog').getByRole('alert')).toHaveText('Temporary save failure')
- await expect(page.getByLabel('Inspector model identifier')).toHaveValue('inspector/second')
- await page.getByRole('button',{name:'Save suggestions',exact:true}).click()
- await expect(page.getByRole('dialog')).toHaveCount(0)
- await expect(page.locator('dd').filter({hasText:'inspector/second'})).toBeVisible()
- const evaluations=await(await request.get('/api/evaluations')).json()
- const evaluation=evaluations.find((e:any)=>e.name==='Inspector selection')
- expect(evaluation.revisions[0].definition.inspector.model).toBe('inspector/second')
- expect(evaluation.revisions).toHaveLength(1)
+test('select a UCloud inspector and preserve it in a new revision', async ({ page, request }) => {
+  await page.route('**/api/providers/ucloud/models', (route) =>
+    route.fulfill({ json: ['inspector/first', 'inspector/second'] }),
+  )
+  await page.goto('/')
+  await page.getByRole('button', { name: 'New evaluation', exact: true }).click()
+  await page.getByLabel('Evaluation name').fill('Inspector selection')
+  await page.getByRole('button', { name: 'Create evaluation', exact: true }).click()
+  await page.getByRole('button', { name: 'Edit inspector', exact: true }).click()
+  await page.getByLabel('Enable automatic inspection and investigations').check()
+  await page.getByLabel('Available UCloud inspector models').selectOption('inspector/second')
+  await expect(page.getByLabel('Inspector model identifier')).toHaveValue('inspector/second')
+  await expect(page.getByRole('button', { name: 'Save suggestions', exact: true })).toBeEnabled()
+  let rejectSave = true
+  await page.route(/\/api\/revisions\/[^/]+$/, async (route) => {
+    if (route.request().method() === 'POST' && rejectSave) {
+      rejectSave = false
+      await route.fulfill({ status: 422, json: { detail: 'Temporary save failure' } })
+    } else await route.continue()
+  })
+  await page.getByRole('button', { name: 'Save suggestions', exact: true }).click()
+  await expect(page.getByRole('dialog').getByRole('alert')).toHaveText('Temporary save failure')
+  await expect(page.getByLabel('Inspector model identifier')).toHaveValue('inspector/second')
+  await page.getByRole('button', { name: 'Save suggestions', exact: true }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.locator('dd').filter({ hasText: 'inspector/second' })).toBeVisible()
+  const evaluations = await (await request.get('/api/evaluations')).json()
+  const evaluation = evaluations.find((e: any) => e.name === 'Inspector selection')
+  expect(evaluation.revisions[0].definition.inspector.model).toBe('inspector/second')
+  expect(evaluation.revisions).toHaveLength(1)
 })
 
-test('names an existing revision without changing its identity',async({page,request})=>{
- await page.goto('/')
- await page.getByRole('button',{name:/Friendly evaluation editor/}).click()
- const id=await page.getByLabel('Revision',{exact:true}).inputValue()
- await page.getByRole('button',{name:'Name revision',exact:true}).click()
- await page.getByLabel('Revision name (optional)').fill('smoke')
- await page.getByRole('button',{name:'Save name',exact:true}).click()
- await expect(page.getByLabel('Revision',{exact:true})).toHaveValue(id)
- await expect(page.getByLabel('Revision',{exact:true}).locator('option:checked')).toHaveText(/smoke/)
- const evaluations=await(await request.get('/api/evaluations')).json()
- const evaluation=evaluations.find((e:any)=>e.name==='Friendly evaluation editor')
- expect(evaluation.revisions).toHaveLength(2)
- expect(evaluation.revisions.find((r:any)=>r.id===id).name).toBe('smoke')
+test('names an existing revision without changing its identity', async ({ page, request }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /Friendly evaluation editor/ }).click()
+  const id = await page.getByLabel('Revision', { exact: true }).inputValue()
+  await page.getByRole('button', { name: 'Name revision', exact: true }).click()
+  await page.getByLabel('Revision name (optional)').fill('smoke')
+  await page.getByRole('button', { name: 'Save name', exact: true }).click()
+  await expect(page.getByLabel('Revision', { exact: true })).toHaveValue(id)
+  await expect(page.getByLabel('Revision', { exact: true }).locator('option:checked')).toHaveText(
+    /smoke/,
+  )
+  const evaluations = await (await request.get('/api/evaluations')).json()
+  const evaluation = evaluations.find((e: any) => e.name === 'Friendly evaluation editor')
+  expect(evaluation.revisions).toHaveLength(2)
+  expect(evaluation.revisions.find((r: any) => r.id === id).name).toBe('smoke')
 })
 
-test('run list updates status automatically without Refresh',async({page})=>{
- let completed=false
- await page.route('**/api/runs',route=>route.fulfill({json:[{
-  id:'automatic-run',revision_id:'revision',status:completed?'completed':'active',
-  config:{models:[{name:'test',backend:'hf'}]},manifest:{ids:['one'],partial:false}
- }]}))
- await page.route('**/api/runs/automatic-run/progress',route=>route.fulfill({json:{
-  status:'active',activities:[],stages:[],models:[],reused:0
- }}))
- await page.goto('/')
- await page.getByRole('button',{name:'Runs',exact:true}).click()
- await expect(page.getByRole('cell',{name:'active',exact:false})).toBeVisible()
- completed=true
- await expect(page.getByRole('cell',{name:'completed',exact:true})).toBeVisible({timeout:10000})
+test('run list updates status automatically without Refresh', async ({ page }) => {
+  let completed = false
+  await page.route('**/api/runs', (route) =>
+    route.fulfill({
+      json: [
+        {
+          id: 'automatic-run',
+          revision_id: 'revision',
+          status: completed ? 'completed' : 'active',
+          config: { models: [{ name: 'test', backend: 'hf' }] },
+          manifest: { ids: ['one'], partial: false },
+        },
+      ],
+    }),
+  )
+  await page.route('**/api/runs/automatic-run/progress', (route) =>
+    route.fulfill({
+      json: {
+        status: 'active',
+        activities: [],
+        stages: [],
+        models: [],
+        reused: 0,
+      },
+    }),
+  )
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Runs', exact: true }).click()
+  await expect(page.getByRole('cell', { name: 'active', exact: false })).toBeVisible()
+  completed = true
+  await expect(page.getByRole('cell', { name: 'completed', exact: true })).toBeVisible({
+    timeout: 10000,
+  })
 })
 
-test('delete revision selection previews dependencies and requires confirmation',async({page,request})=>{
- const definition=await (await request.get('/api/demo')).json()
- definition.name='Deletion dialog fixture'
- const created=await (await request.post('/api/evaluations',{data:definition})).json()
- const revised=await (await request.post(`/api/revisions/${created.revision_id}`,{data:{sampler:{seed:43}}})).json()
- await page.goto('/')
- await page.getByRole('button',{name:/Deletion dialog fixture/}).click()
- await page.getByRole('button',{name:'Delete revisions',exact:true}).click()
- const dialog=page.getByRole('dialog',{name:'Delete revisions',exact:true})
- await expect(dialog.getByText('Selected: 1 revision',{exact:true})).toBeVisible()
- const current=dialog.getByRole('checkbox',{name:/current revision/})
- await expect(current).toBeChecked()
- await expect(dialog.getByRole('button',{name:'Delete selected revisions'})).toBeDisabled()
- await current.uncheck()
- await expect(dialog.getByRole('button',{name:'Delete selected revisions'})).toBeDisabled()
- await current.check()
- await expect(dialog.getByText('No run data depends on this selection.')).toBeVisible()
- await dialog.getByRole('checkbox',{name:'I understand that this deletion cannot be undone.'}).check()
- await dialog.getByRole('button',{name:'Delete selected revisions'}).click()
- await expect(dialog).toHaveCount(0)
- expect((await request.get(`/api/revisions/${revised.revision_id}`)).status()).toBe(404)
- expect((await request.get(`/api/revisions/${created.revision_id}`)).status()).toBe(200)
+test('delete revision selection previews dependencies and requires confirmation', async ({
+  page,
+  request,
+}) => {
+  const definition = await (await request.get('/api/demo')).json()
+  definition.name = 'Deletion dialog fixture'
+  const created = await (await request.post('/api/evaluations', { data: definition })).json()
+  const revised = await (
+    await request.post(`/api/revisions/${created.revision_id}`, { data: { sampler: { seed: 43 } } })
+  ).json()
+  await page.goto('/')
+  await page.getByRole('button', { name: /Deletion dialog fixture/ }).click()
+  await page.getByRole('button', { name: 'Delete revisions', exact: true }).click()
+  const dialog = page.getByRole('dialog', { name: 'Delete revisions', exact: true })
+  await expect(dialog.getByText('Selected: 1 revision', { exact: true })).toBeVisible()
+  const current = dialog.getByRole('checkbox', { name: /current revision/ })
+  await expect(current).toBeChecked()
+  await expect(dialog.getByRole('button', { name: 'Delete selected revisions' })).toBeDisabled()
+  await current.uncheck()
+  await expect(dialog.getByRole('button', { name: 'Delete selected revisions' })).toBeDisabled()
+  await current.check()
+  await expect(dialog.getByText('No run data depends on this selection.')).toBeVisible()
+  await dialog
+    .getByRole('checkbox', { name: 'I understand that this deletion cannot be undone.' })
+    .check()
+  await dialog.getByRole('button', { name: 'Delete selected revisions' }).click()
+  await expect(dialog).toHaveCount(0)
+  expect((await request.get(`/api/revisions/${revised.revision_id}`)).status()).toBe(404)
+  expect((await request.get(`/api/revisions/${created.revision_id}`)).status()).toBe(200)
 })
