@@ -22,3 +22,10 @@ def next_batch_size(current, peak_bytes, baseline_bytes, budget_bytes, ceiling=1
     per_example = max((peak_bytes - baseline_bytes) / max(current, 1), 1)
     capacity = max(1, math.floor(max(0, budget_bytes - baseline_bytes) / per_example))
     return max(1, min(ceiling, current * 2, capacity))
+
+
+def eligible_gpus(memory, allowed, occupied, min_free_gib=0):
+    """Gate each new worker placement on current free memory, including TP ranks."""
+    return sorted((gpu for gpu in allowed - occupied
+                   if memory[gpu][0] >= min_free_gib * GIB),
+                  key=lambda gpu: memory[gpu][0], reverse=True)

@@ -157,3 +157,5 @@ python -m kineticeval.migrate_inputs kineticeval.db
 ```
 
 These migrations are transactional and idempotent. Input consolidation assigns new revision IDs and rewrites references without aliases; run and job IDs remain stable. Restart the API and workers only after both commands complete. Never run old workers against the migrated schema. Roll back by restoring the backup together with its matching code version.
+
+To require at least 80 GiB of currently free memory on every GPU before starting a local worker, run the fleet with `--min-free-gib 80 --cap-gib 80`. The dispatcher rechecks headroom on every scheduling pass and waits when no GPU qualifies. This admission gate does not interrupt already-running workers.

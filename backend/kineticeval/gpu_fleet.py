@@ -11,7 +11,7 @@ from sqlalchemy import select, func
 from .db import Database, Job, RunJob, Run
 from .core import identity
 from .local_hf import runtime_identity
-from .gpu_policy import memory_budget, tensor_parallel_size
+from .gpu_policy import memory_budget, tensor_parallel_size, eligible_gpus
 
 
 def pending_groups(db):
@@ -60,7 +60,10 @@ def main():
     parser.add_argument('--db', default='kineticeval.db')
     parser.add_argument('--gpus', help='Comma-separated allowed GPU indices; defaults to all visible GPUs')
     parser.add_argument('--cap-gib', type=float, default=80)
+    parser.add_argument('--min-free-gib', type=float, default=0, help='Minimum free VRAM per GPU before starting a worker')
     args = parser.parse_args()
+    if args.min_free_gib < 0:
+        parser.error('--min-free-gib must be nonnegative')
     if args.cap_gib <= 0:
         parser.error('--cap-gib must be positive')
     db = Database(args.db)
@@ -88,7 +91,7 @@ def main():
                     child['process'].terminate()
             occupied = {gpu for child in children for gpu in child['gpus']}
             memory = gpu_memory()
-            free = sorted(allowed - occupied, key=lambda gpu: memory[gpu][0], reverse=True)
+            free = eligible_gpus(memory, allowed, occupied, args.min_free_gib)
             for group in groups:
                 if time.monotonic() < retry_after.get(group['id'],0):
                     continue
