@@ -1,0 +1,8 @@
+{
+  "examples_sha256": "a76863212f2b6579de8eafbe67afe0ee70877d3340cf3a6f55512d70676021b0",
+  "expected_count": 13937,
+  "factory": "dynaeval.benchmark_tasks:mmlu_qa",
+  "kind": "inspect",
+  "kwargs": {},
+  "limit": 100000
+}

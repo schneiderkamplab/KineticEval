@@ -30,3 +30,9 @@ logs/
 *.pem
 *.key
 examples/*-snapshot.json
+
+# Versioned definition recipes (not downloaded datasets or model weights)
+!catalog/datasets/
+!catalog/datasets/**
+!catalog/models/
+!catalog/models/**

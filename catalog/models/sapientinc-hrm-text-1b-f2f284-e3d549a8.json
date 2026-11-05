@@ -1,0 +1,23 @@
+{
+  "created": 1793859094.3880134,
+  "id": "e3d549a8c1b74606862a0e37c94d7799",
+  "name": "sapientinc/HRM-Text-1B · f2f284",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "context_limit": 4096,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "name": "sapientinc/HRM-Text-1B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "22097cbcecdd1301afe30a19a3ee61b96a9863e5"
+  },
+  "updated": 1793869875.7324507
+}

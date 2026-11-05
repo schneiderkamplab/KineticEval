@@ -25,7 +25,7 @@ python -m kineticeval.worker
 
 Open **http://127.0.0.1:8000**. Choose **Start with QA fixture**, then **Start evaluation**. For a demo, choose **Additional options → Use demo models**; these are deterministic fixtures. Evaluated models use local `hf` weights or an `inspect` adapter. UCloud is reserved for inspectors in this workspace. Jobs remain pending until the worker runs. Use `python -m kineticeval.worker --concurrency 4` for concurrent handlers, or `--once` to drain available work and exit.
 
-For frontend development, run `npm run dev --prefix frontend`; its API proxy points to port 8000. Set `KINETICEVAL_DB` in both processes to use a different database. SQLite persists definitions, sampled rows, rendered prompts, attempts, and analysis artifacts. Keep the service bound to localhost; there are no accounts or shared-hosting permissions.
+For frontend development, run `npm run dev --prefix frontend`; its API proxy points to port 8000. Set `KINETICEVAL_DB` in both processes to use a different database. SQLite separates the definition catalog (including complete dataset examples) from execution history, sampled rows, rendered prompts, attempts, and analysis artifacts. See [catalog rebuilding and storage migration](catalog/README.md) for the versioned recipes and single build command. Keep the service bound to localhost; there are no accounts or shared-hosting permissions.
 
 ## Inspect AI's three roles
 

@@ -1,0 +1,26 @@
+{
+  "created": 1793873654.0799336,
+  "id": "89cef8e59ae34179b0b629a859b1caa0",
+  "name": "HRM-Text-1B · plain-text messages",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 4096,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "sapientinc/HRM-Text-1B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "22097cbcecdd1301afe30a19a3ee61b96a9863e5"
+  },
+  "template_file": "templates/89cef8e59ae34179b0b629a859b1caa0.jinja",
+  "updated": 1793873704.0303788
+}

@@ -1,0 +1,30 @@
+{
+  "files": [
+    {
+      "path": "/work/dfm/HRM-Text/dfm-evals/dfm_evals/tasks/mc9.py",
+      "sha256": "ba8805def152afabeb781d2a9cd8da398138d3ed2087f1b7bd0a913cfd6443ae",
+      "copied_to": "backend/kineticeval/catalog_tasks/mc9.py"
+    },
+    {
+      "path": "/work/dfm/HRM-Text/dfm-evals/dfm_evals/tasks/_sharding.py",
+      "sha256": "2f5fd91778e7af04606fb33facb3bffd1af121d70ccfbd8c9371388ad3400c67",
+      "copied_to": "backend/kineticeval/catalog_tasks/_sharding.py"
+    },
+    {
+      "path": "/work/dfm/HRM-Text/dfm-evals/dfm_evals/tasks/piqa.py",
+      "sha256": "43fc04d6de8a64b5f73f3e141197f55814f554c4928187a8b43b1647e3b8bec9",
+      "copied_to": "backend/kineticeval/catalog_tasks/piqa.py"
+    },
+    {
+      "path": "/work/dfm/HRM-Text/dfm-evals/dfm_evals/tasks/danish_citizen_tests.py",
+      "sha256": "6091b8547e90f4b867a5ccbeab6b3555698f5198954d80bca0498e96c88b97f9",
+      "copied_to": "backend/kineticeval/catalog_tasks/danish_citizen_tests.py"
+    },
+    {
+      "path": "/work/dfm/HRM-Text/dfm-evals/dfm_evals/tasks/piqa/piqa-dan.json",
+      "sha256": "c582002fbc0dc00b5770b7f5151a3c0898dac6352f05d5da59f31fab85d79996",
+      "copied_to": "backend/kineticeval/catalog_tasks/piqa/piqa-dan.json"
+    }
+  ],
+  "note": "Task code and the small bundled PIQA-da dataset are versioned; HF examples are downloaded by the build script."
+}

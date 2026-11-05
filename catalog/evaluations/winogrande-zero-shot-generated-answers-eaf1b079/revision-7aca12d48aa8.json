@@ -1,0 +1,193 @@
+{
+  "created": 1793865388.3320801,
+  "dataset": "winogrande",
+  "definition": {
+    "description": "Full labeled evaluation split, using Inspect Evals prompts and choice scoring. Native model chat templates; thinking disabled; greedy decoding; 64 output tokens.",
+    "expected_format": "answer_letter",
+    "heuristics": [
+      {
+        "config": {},
+        "name": "qa",
+        "version": "2"
+      }
+    ],
+    "inspector": {
+      "audit_fraction": 0.1,
+      "audit_max": 100,
+      "audit_min": 10,
+      "enabled": true,
+      "endpoint": "https://ai.cloud.sdu.dk/v1",
+      "failure_inspector_limit": null,
+      "max_tokens": 4096,
+      "model": "zai-org/GLM-5.3-Flash",
+      "provider": "ucloud",
+      "seed": 42,
+      "version": "1"
+    },
+    "metrics": [
+      {
+        "config": {
+          "factory": "dynaeval.benchmark_tasks:winogrande_qa",
+          "fingerprint": "992bf4de6bc05e3ff5a3699630ebe0f879e6b518bf885d8922380363d0febba1",
+          "inspect_version": "0.3.287",
+          "kwargs": {},
+          "metric_names": [
+            "inspect_ai/accuracy",
+            "inspect_ai/stderr"
+          ],
+          "metric_specs": [
+            {
+              "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+              "module": "inspect_ai.scorer._metrics.accuracy",
+              "name": "inspect_ai/accuracy",
+              "params": {}
+            },
+            {
+              "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+              "module": "inspect_ai.scorer._metrics.std",
+              "name": "inspect_ai/stderr",
+              "params": {}
+            }
+          ],
+          "scorer_spec": {
+            "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+            "module": "inspect_ai.scorer._choice",
+            "name": "inspect_ai/choice",
+            "params": {}
+          },
+          "solver_specs": [
+            {
+              "name": "inspect_ai/multiple_choice",
+              "params": {
+                "shuffle": false,
+                "template": "Answer the following multiple choice question by choosing the best logical option to replace the [BLANK]. The entire content of your response should be of the following format: 'ANSWER: $LETTER' (without quotes) where LETTER is one of {letters}.\n\n{question}\n{choices}\n"
+              }
+            }
+          ]
+        },
+        "name": "inspect",
+        "version": "1"
+      }
+    ],
+    "name": "WinoGrande · zero-shot generated answers",
+    "overlays": {},
+    "prompt_template": "{input}",
+    "sampler": {
+      "limit": 10,
+      "seed": 42,
+      "subsets": []
+    },
+    "scorer": {
+      "config": {
+        "factory": "dynaeval.benchmark_tasks:winogrande_qa",
+        "fingerprint": "992bf4de6bc05e3ff5a3699630ebe0f879e6b518bf885d8922380363d0febba1",
+        "inspect_version": "0.3.287",
+        "kwargs": {},
+        "metric_names": [
+          "inspect_ai/accuracy",
+          "inspect_ai/stderr"
+        ],
+        "metric_specs": [
+          {
+            "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+            "module": "inspect_ai.scorer._metrics.accuracy",
+            "name": "inspect_ai/accuracy",
+            "params": {}
+          },
+          {
+            "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+            "module": "inspect_ai.scorer._metrics.std",
+            "name": "inspect_ai/stderr",
+            "params": {}
+          }
+        ],
+        "scorer_spec": {
+          "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+          "module": "inspect_ai.scorer._choice",
+          "name": "inspect_ai/choice",
+          "params": {}
+        },
+        "solver_specs": [
+          {
+            "name": "inspect_ai/multiple_choice",
+            "params": {
+              "shuffle": false,
+              "template": "Answer the following multiple choice question by choosing the best logical option to replace the [BLANK]. The entire content of your response should be of the following format: 'ANSWER: $LETTER' (without quotes) where LETTER is one of {letters}.\n\n{question}\n{choices}\n"
+            }
+          }
+        ]
+      },
+      "name": "inspect",
+      "version": "1"
+    },
+    "source": {
+      "benchmark": "winogrande",
+      "factory": "dynaeval.benchmark_tasks:winogrande_qa",
+      "fingerprint": "992bf4de6bc05e3ff5a3699630ebe0f879e6b518bf885d8922380363d0febba1",
+      "generation_config": {
+        "max_tokens": 64
+      },
+      "inspect_evals_version": "0.27.0",
+      "inspect_version": "0.3.287",
+      "kind": "inspect",
+      "kwargs": {},
+      "limit": 100000,
+      "metric_names": [
+        "inspect_ai/accuracy",
+        "inspect_ai/stderr"
+      ],
+      "metric_specs": [
+        {
+          "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+          "module": "inspect_ai.scorer._metrics.accuracy",
+          "name": "inspect_ai/accuracy",
+          "params": {}
+        },
+        {
+          "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+          "module": "inspect_ai.scorer._metrics.std",
+          "name": "inspect_ai/stderr",
+          "params": {}
+        }
+      ],
+      "protocol": {
+        "fewshot": 0,
+        "max_tokens": 64,
+        "score_type": "generated-answer accuracy, not likelihood ranking",
+        "thinking": false
+      },
+      "scorer_spec": {
+        "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+        "module": "inspect_ai.scorer._choice",
+        "name": "inspect_ai/choice",
+        "params": {}
+      },
+      "solver": [
+        {
+          "name": "inspect_ai/multiple_choice",
+          "params": {
+            "shuffle": false,
+            "template": "Answer the following multiple choice question by choosing the best logical option to replace the [BLANK]. The entire content of your response should be of the following format: 'ANSWER: $LETTER' (without quotes) where LETTER is one of {letters}.\n\n{question}\n{choices}\n"
+          }
+        }
+      ],
+      "solver_specs": [
+        {
+          "name": "inspect_ai/multiple_choice",
+          "params": {
+            "shuffle": false,
+            "template": "Answer the following multiple choice question by choosing the best logical option to replace the [BLANK]. The entire content of your response should be of the following format: 'ANSWER: $LETTER' (without quotes) where LETTER is one of {letters}.\n\n{question}\n{choices}\n"
+          }
+        }
+      ],
+      "upstream_revisions": {
+        "WINOGRANDE_DATASET_REVISION": "01e74176c63542e6b0bcb004dcdea22d94fb67b5"
+      }
+    },
+    "system_prompt": ""
+  },
+  "evaluation_id": "eaf1b079865544c582632dc476304351",
+  "id": "7aca12d48aa847a08777ad2f6b29b38d",
+  "label": "smoke",
+  "parent_id": "390ab17077f34c50a53737f52c8d4e61"
+}

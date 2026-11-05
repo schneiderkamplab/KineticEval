@@ -1,0 +1,23 @@
+{
+  "created": 1793821893.279121,
+  "id": "0cdda70b94834cf0979b74fe5e06dcee",
+  "name": "Qwen/Qwen3.5-2B · 4d8f91",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "context_limit": 4096,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "name": "Qwen/Qwen3.5-2B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "15852e8c16360a2fea060d615a32b45270f8a8fc"
+  },
+  "updated": 1793869875.7320154
+}

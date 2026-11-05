@@ -17,6 +17,7 @@ class Base(DeclarativeBase):
 
 class Evaluation(Base):
     __tablename__ = 'evaluations'
+    __table_args__ = {'schema': 'definitions'}
     id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
     created: Mapped[float] = mapped_column(default=time.time)
@@ -24,6 +25,7 @@ class Evaluation(Base):
 
 class Revision(Base):
     __tablename__ = 'evaluation_revisions'
+    __table_args__ = {'schema': 'definitions'}
     id: Mapped[str] = mapped_column(primary_key=True)
     evaluation_id: Mapped[str] = mapped_column(index=True)
     parent_id: Mapped[str | None]
@@ -34,6 +36,7 @@ class Revision(Base):
 class RevisionLabel(Base):
     """Editable display metadata, separate from immutable evaluation definitions."""
     __tablename__ = 'revision_labels'
+    __table_args__ = {'schema': 'definitions'}
     revision_id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
 
@@ -129,12 +132,33 @@ class Experiment(Base):
 
 
 class Database:
-    def __init__(self, path):
+    def __init__(self, path, definitions_path=None):
+        import os
+        from pathlib import Path
+        from .storage import definition_path, legacy_layout
+        self.path = str(path)
+        self.definitions_path = definition_path(path, definitions_path or os.environ.get('KINETICEVAL_DEFINITIONS_DB'))
+        self.legacy_layout = legacy_layout(path)
+        if not self.legacy_layout and self.path != ':memory:' and Path(self.path).is_file() and not Path(self.definitions_path).is_file():
+            import sqlite3
+            with sqlite3.connect(self.path) as probe:
+                has_runs = probe.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='runs'").fetchone()
+                if has_runs and probe.execute('SELECT 1 FROM runs LIMIT 1').fetchone():
+                    raise ValueError('Definitions database is missing; restore or rebuild the catalog before opening existing runs')
+        if self.path != ':memory:' and Path(self.path).resolve() == Path(self.definitions_path).resolve():
+            raise ValueError('Definitions and execution must use different files')
         self.engine = create_engine(f'sqlite:///{path}', connect_args={'check_same_thread': False, 'timeout': 300})
+        if self.legacy_layout:
+            self.engine = self.engine.execution_options(schema_translate_map={'definitions':None})
         @event.listens_for(self.engine, 'connect')
         def setup(connection, _):
-            connection.execute('PRAGMA journal_mode=WAL')
             connection.execute('PRAGMA busy_timeout=300000')
+            if self.legacy_layout:
+                connection.execute('PRAGMA journal_mode=WAL')
+            else:
+                connection.execute('PRAGMA journal_mode=DELETE')
+                connection.execute('ATTACH DATABASE ? AS definitions', (self.definitions_path,))
+                connection.execute('PRAGMA definitions.journal_mode=DELETE')
         Base.metadata.create_all(self.engine)
         with self.engine.begin() as connection:
             connection.execute(text('CREATE INDEX IF NOT EXISTS jobs_queue ON jobs(kind,status,model,created)'))
@@ -259,6 +283,7 @@ class Database:
 
 class ModelConfiguration(Base):
     __tablename__ = 'model_configurations'
+    __table_args__ = {'schema': 'definitions'}
     id: Mapped[str] = mapped_column(primary_key=True)
     name: Mapped[str]
     spec: Mapped[dict] = mapped_column(JSON)

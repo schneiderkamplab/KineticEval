@@ -1,0 +1,23 @@
+{
+  "created": 1793822222.2282913,
+  "id": "6314b0952a8d4ccf9583ed0cf17d2285",
+  "name": "google/gemma-4-E2B-it · ac67c6",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "context_limit": 4096,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "name": "google/gemma-4-E2B-it",
+    "parameters": {
+      "max_tokens": 256,
+      "temperature": 0
+    },
+    "revision": "4adf15748de9e1a0097b6274cee9c15836c41c37"
+  },
+  "updated": 1793869875.7321813
+}

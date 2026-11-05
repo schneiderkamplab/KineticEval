@@ -1,0 +1,196 @@
+{
+  "created": 1793871312.3086505,
+  "dataset": "mmlu",
+  "definition": {
+    "description": "Full labeled evaluation split, using Inspect Evals prompts and choice scoring. Native model chat templates; thinking disabled; greedy decoding; 64 output tokens.",
+    "expected_format": "answer_letter",
+    "generation_defaults": {},
+    "heuristics": [
+      {
+        "config": {},
+        "name": "qa",
+        "version": "2"
+      }
+    ],
+    "inspector": {
+      "audit_fraction": 0.1,
+      "audit_max": 100,
+      "audit_min": 10,
+      "enabled": true,
+      "endpoint": "https://ai.cloud.sdu.dk/v1",
+      "failure_inspector_limit": null,
+      "max_tokens": 4096,
+      "model": "zai-org/GLM-5.3",
+      "provider": "ucloud",
+      "seed": 42,
+      "version": "1"
+    },
+    "metrics": [
+      {
+        "config": {
+          "factory": "dynaeval.benchmark_tasks:mmlu_qa",
+          "fingerprint": "992bf4de6bc05e3ff5a3699630ebe0f879e6b518bf885d8922380363d0febba1",
+          "inspect_version": "0.3.287",
+          "kwargs": {},
+          "metric_names": [
+            "inspect_ai/accuracy",
+            "inspect_ai/stderr"
+          ],
+          "metric_specs": [
+            {
+              "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+              "module": "inspect_ai.scorer._metrics.accuracy",
+              "name": "inspect_ai/accuracy",
+              "params": {}
+            },
+            {
+              "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+              "module": "inspect_ai.scorer._metrics.std",
+              "name": "inspect_ai/stderr",
+              "params": {}
+            }
+          ],
+          "scorer_spec": {
+            "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+            "module": "inspect_ai.scorer._choice",
+            "name": "inspect_ai/choice",
+            "params": {}
+          },
+          "solver_specs": [
+            {
+              "name": "inspect_ai/multiple_choice",
+              "params": {
+                "cot": false,
+                "max_tokens": 64
+              }
+            }
+          ]
+        },
+        "name": "inspect",
+        "version": "1"
+      }
+    ],
+    "name": "MMLU · zero-shot generated answers",
+    "overlays": {},
+    "prompt_template": "{input}",
+    "sampler": {
+      "limit": 10,
+      "seed": 42,
+      "subsets": []
+    },
+    "scorer": {
+      "config": {
+        "factory": "dynaeval.benchmark_tasks:mmlu_qa",
+        "fingerprint": "992bf4de6bc05e3ff5a3699630ebe0f879e6b518bf885d8922380363d0febba1",
+        "inspect_version": "0.3.287",
+        "kwargs": {},
+        "metric_names": [
+          "inspect_ai/accuracy",
+          "inspect_ai/stderr"
+        ],
+        "metric_specs": [
+          {
+            "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+            "module": "inspect_ai.scorer._metrics.accuracy",
+            "name": "inspect_ai/accuracy",
+            "params": {}
+          },
+          {
+            "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+            "module": "inspect_ai.scorer._metrics.std",
+            "name": "inspect_ai/stderr",
+            "params": {}
+          }
+        ],
+        "scorer_spec": {
+          "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+          "module": "inspect_ai.scorer._choice",
+          "name": "inspect_ai/choice",
+          "params": {}
+        },
+        "solver_specs": [
+          {
+            "name": "inspect_ai/multiple_choice",
+            "params": {
+              "cot": false,
+              "max_tokens": 64
+            }
+          }
+        ]
+      },
+      "name": "inspect",
+      "version": "1"
+    },
+    "source": {
+      "benchmark": "mmlu",
+      "factory": "dynaeval.benchmark_tasks:mmlu_qa",
+      "fingerprint": "992bf4de6bc05e3ff5a3699630ebe0f879e6b518bf885d8922380363d0febba1",
+      "generation_config": {
+        "max_tokens": 64,
+        "temperature": 0.0
+      },
+      "inspect_evals_version": "0.27.0",
+      "inspect_version": "0.3.287",
+      "kind": "inspect",
+      "kwargs": {},
+      "limit": 100000,
+      "metric_names": [
+        "inspect_ai/accuracy",
+        "inspect_ai/stderr"
+      ],
+      "metric_specs": [
+        {
+          "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+          "module": "inspect_ai.scorer._metrics.accuracy",
+          "name": "inspect_ai/accuracy",
+          "params": {}
+        },
+        {
+          "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+          "module": "inspect_ai.scorer._metrics.std",
+          "name": "inspect_ai/stderr",
+          "params": {}
+        }
+      ],
+      "protocol": {
+        "fewshot": 0,
+        "max_tokens": 64,
+        "score_type": "generated-answer accuracy, not likelihood ranking",
+        "thinking": false
+      },
+      "scorer_spec": {
+        "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+        "module": "inspect_ai.scorer._choice",
+        "name": "inspect_ai/choice",
+        "params": {}
+      },
+      "solver": [
+        {
+          "name": "inspect_ai/multiple_choice",
+          "params": {
+            "cot": false,
+            "max_tokens": 64
+          }
+        }
+      ],
+      "solver_specs": [
+        {
+          "name": "inspect_ai/multiple_choice",
+          "params": {
+            "cot": false,
+            "max_tokens": 64
+          }
+        }
+      ],
+      "upstream_revisions": {
+        "MMLU_REVISION": "c30699e8356da336a370243923dbaf21066bb9fe",
+        "MMMLU_REVISION": "325a01dc3e173cac1578df94120499aaca2e2504"
+      }
+    },
+    "system_prompt": ""
+  },
+  "evaluation_id": "418a06b435834403b4d66e9302ab3ea2",
+  "id": "429367976b774f879318c01bcb6e1bf1",
+  "label": "smoke",
+  "parent_id": "ff2379219deb4bdf898d5d8195f9d120"
+}

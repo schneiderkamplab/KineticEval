@@ -1,0 +1,8 @@
+{
+  "examples_sha256": "df9ca16c75bd5cb971b4a5a039b67c60d484475ada3b5040efd082e06bcc182d",
+  "expected_count": 1267,
+  "factory": "dynaeval.benchmark_tasks:winogrande_qa",
+  "kind": "inspect",
+  "kwargs": {},
+  "limit": 100000
+}

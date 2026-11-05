@@ -1,0 +1,22 @@
+{
+  "datasets": [
+    "datasets/winogrande.json",
+    "datasets/hellaswag.json",
+    "datasets/mmlu.json"
+  ],
+  "description": "Materialized definitions; generated responses and run history are stored separately.",
+  "evaluations": [
+    "evaluations/winogrande-zero-shot-generated-answers-eaf1b079",
+    "evaluations/hellaswag-zero-shot-generated-answers-e3bcb656",
+    "evaluations/mmlu-zero-shot-generated-answers-418a06b4"
+  ],
+  "format_version": 1,
+  "models": [
+    "models/danish-foundation-models-dfm-mimir-v1-8-a77f8e-cda0a224.json",
+    "models/google-gemma-4-e2b-it-89e926-59f859d3.json",
+    "models/qwen-qwen3-5-2b-4d8f91-0cdda70b.json",
+    "models/google-gemma-4-e2b-it-ac67c6-6314b095.json",
+    "models/sapientinc-hrm-text-1b-f2f284-e3d549a8.json",
+    "models/hrm-text-1b-plain-text-messages-89cef8e5.json"
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "created": 1793821893.279121,
+  "id": "cda0a224f6ae4f9198e8aa412c7db214",
+  "name": "danish-foundation-models/DFM-Mimir-v1.8 · a77f8e",
+  "spec": {
+    "artifact_hash": "98a1a3bfe5f35f59b2e46d3fcaf3f4b3e55e0e5f2925c6a2c2cb8e00b430c6c8",
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "context_limit": 4096,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": "/work/dfm/euroeval-runs/mimir-v1.8-3800000-validation/model",
+    "name": "danish-foundation-models/DFM-Mimir-v1.8",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": null
+  },
+  "updated": 1793869875.7319071
+}

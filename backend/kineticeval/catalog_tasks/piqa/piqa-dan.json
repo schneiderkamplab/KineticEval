@@ -1,0 +1,866 @@
+[
+    {
+        "prompt": "Når du jeg har inviteret en gruppe venner på besøg så forventer jeg at når de kommer at de gør følgende",
+        "solution0": "Banker på, hilser, samt tager sko og overtøj af inden de går ind.",
+        "solution1": "Banker på, hilser, samt tager overtøj af inden de går ind.",
+        "label": 0,
+        "n_words": 34,
+        "id": 0
+    },
+    {
+        "prompt": "For at lave en god risalamande skal man først lave en risengrød på sødmælk og herefter gøre følgende",
+        "solution0": "smutte og hakke mandlerne, herefter vende det i den nedkølet risengrød sammen med flødeskummen.",
+        "solution1": "smutte og hakke mandler, herefter vende det i den varme risengrød sammen med flødeskummen.",
+        "label": 0,
+        "n_words": 32,
+        "id": 1
+    },
+    {
+        "prompt": "Hvordan får jeg mandler uden skræl på?",
+        "solution0": "Hæld den i kogende vand i ca. 10 minutter og hæld derefter vandet fra. Lad dem køle af i 2 minutter. Herefter kan skrællen smuttes af med fingrene",
+        "solution1": "Hæld den i kogende vand i ca. 10 minutter og hæld derefter vandet fra. Lad dem køle af i 2 minutter. Herefter kan skrælles skrabes af med en kniv",
+        "label": 0,
+        "n_words": 35,
+        "id": 2
+    },
+    {
+        "prompt": "Når man tager en bybus i en af de mange byer i landet, hvad er så det mest normale at gøre når man kommer ind i en halvfyldt bus?",
+        "solution0": "Sætte sig på et sæde ved en anden",
+        "solution1": "Sætte sig på et sæde alene",
+        "label": 1,
+        "n_words": 37,
+        "id": 3
+    },
+    {
+        "prompt": "Hvis man netop har købt et højtbelagte og vender det på hovedet så",
+        "solution0": "falder på pålægget af.",
+        "solution1": "bliver pålægget siddende.",
+        "label": 0,
+        "n_words": 17,
+        "id": 4
+    },
+    {
+        "prompt": "Hvis jeg netop har smurt min leverpostejsmad og så vender den på hovedet så",
+        "solution0": "falder på pålægget af.",
+        "solution1": "bliver pålægget siddende.",
+        "label": 1,
+        "n_words": 18,
+        "id": 5
+    },
+    {
+        "prompt": "Hvis jeg gerne vil invitere til en fest så skal jeg sende invitationen som",
+        "solution0": "et brev",
+        "solution1": "en pakke",
+        "label": 0,
+        "n_words": 16,
+        "id": 6
+    },
+    {
+        "prompt": "En frikadelle, eksempel serveret sammen med kartofler og brun sovs, er cirka samme størrelse som",
+        "solution0": "en kartoffel",
+        "solution1": "et æble",
+        "label": 0,
+        "n_words": 17,
+        "id": 7
+    },
+    {
+        "prompt": "Efter at have lavet en lagkage, så kan du se at den er færdig ved at",
+        "solution0": "sætte en tandstik i den og se om den er færdig",
+        "solution1": "ved at kigge på den og se at den er færdig.",
+        "label": 1,
+        "n_words": 27,
+        "id": 8
+    },
+    {
+        "prompt": "En portion øllebrød, som er lavet på øl, rugbrød, sukker og vand, indeholder ",
+        "solution0": "lidt eller ingen alkohol",
+        "solution1": "alkohol svarende til 0,5 genstand",
+        "label": 0,
+        "n_words": 17,
+        "id": 9
+    },
+    {
+        "prompt": "I en skål med koldskål kan der cirka være",
+        "solution0": "10-20 kammerjunker",
+        "solution1": "100-200 kammerjunker",
+        "label": 0,
+        "n_words": 11,
+        "id": 10
+    },
+    {
+        "prompt": "Hvis du sætter en opvaskemaskine til, er det vigtigt, at du sikrer dig, at den står stabilt, og derefter",
+        "solution0": "sætter afløbet til, tænder for vandet og derefter skruer tilførselsslangen på.",
+        "solution1": "sætter afløbet til, skruer tilførselsslangen på og derefter tænder for vandet.",
+        "label": 1,
+        "n_words": 30,
+        "id": 11
+    },
+    {
+        "prompt": "Hvad skal der til for at lave eller tilberede en portion koldskål?",
+        "solution0": "vanilje, sukker, æggeblommer, kærnemælk, ymer, citron",
+        "solution1": "vanilje, sukker, æggeblommer, kærnemælk, mel, citron",
+        "label": 0,
+        "n_words": 18,
+        "id": 12
+    },
+    {
+        "prompt": "Vil gerne komme hurtigere ned ad kælkebakken end mine venner. Hvad kan jeg gøre for at min kælk er hurtigere?",
+        "solution0": "Gnid mederne eller undersiden af kælken med stearin",
+        "solution1": "Gnid mederne eller undersiden af kælken med olie",
+        "label": 0,
+        "n_words": 28,
+        "id": 13
+    },
+    {
+        "prompt": "Når man eksempelvis til jul laver flæskesteg er det er vigtigt at sikre sig at",
+        "solution0": "sværene er sprøde",
+        "solution1": "kødet er mørt",
+        "label": 0,
+        "n_words": 18,
+        "id": 14
+    },
+    {
+        "prompt": "Hvis man bommer - altså når den tunge tværstang nederst på sejlet svinger til siden i et ‘sving’ - under sejlads er det vigtig at man",
+        "solution0": "dukker sig under bommen, så man ikke bliver ramt",
+        "solution1": "hopper henover bommen, så man ikke bliver ramt",
+        "label": 0,
+        "n_words": 35,
+        "id": 15
+    },
+    {
+        "prompt": "Hvis man laver en makrelmad, altså en rugbrødsmad med makrel ovenpå, kan man vælge at tage",
+        "solution0": "mayonnaise ovenpå sin mad",
+        "solution1": "remoulade ovenpå sin mad",
+        "label": 0,
+        "n_words": 20,
+        "id": 16
+    },
+    {
+        "prompt": "Hvordan viser man at man gerne vil bremse på et cykel?",
+        "solution0": "man holder den en hånd op, for at signalere at man har tænkt sig at stoppe.",
+        "solution1": "man holder den en hånd til venstre, for at signalere at man har tænkt sig at stoppe.",
+        "label": 0,
+        "n_words": 27,
+        "id": 17
+    },
+    {
+        "prompt": "Hvordan cykler man mest sikkert når det regner og blæser meget?",
+        "solution0": "Brug cykelhjelm og kør langsomt, så du har god kontrol. Undgå helst at cykle hvis det stormer.",
+        "solution1": "Brug cykelhjelm og kør hurtigt, så du har god kontrol. Undgå helst at cykle hvis det stormer.",
+        "label": 0,
+        "n_words": 28,
+        "id": 18
+    },
+    {
+        "prompt": "Hvordan sikrer du dig mod at brun farin ikke bliver hårdt og klumper?",
+        "solution0": "Opbevar det i en tætlukket bøtte eller pose med et stykke rugbrød. Det mugner ikke, og du kan lægge sukkeret i lang tid.",
+        "solution1": "Opbevar det i en tætlukket bøtte eller pose med et stof. Det mugner ikke, og du kan lægge sukkeret i lang tid.",
+        "label": 0,
+        "n_words": 36,
+        "id": 19
+    },
+    {
+        "prompt": "Min veninde og jeg har planer om at tage på café i næste uge. Kan jeg godt stille barnevognen med barn udenfor, mens vi drikker kaffe?",
+        "solution0": "Det er socialt acceptabelt at efterlade sit barn i barnevognen uden for en café, når man går ind og drikker kaffe.",
+        "solution1": "Det er socialt uacceptabelt at efterlade sit barn i barnevognen uden for en café, når man går ind og drikker kaffe.",
+        "label": 0,
+        "n_words": 47,
+        "id": 20
+    },
+    {
+        "prompt": "Mange mennesker i Danmark tænker",
+        "solution0": "at det er godt, hvis man kommer til tiden også til ting. Hvilket typisk betyder man kommer et par minutter før det aftalte tidspunkt.",
+        "solution1": "at det er godt, hvis man kommer til tiden også til ting. Hvilket typisk betyder, at man kommer ikke mere end 15 minutter senere end det aftalte tidspunkt.",
+        "label": 0,
+        "n_words": 29,
+        "id": 21
+    },
+    {
+        "prompt": "Hvordan fjerner man nemt skrællen fra et æble?",
+        "solution0": "Du tager en kartoffelskræller og skræller æblet ved at køre den henover siden på æblet indtil alt skrællet er væk",
+        "solution1": "Du tager et skrabejern og skræller æblet ved at køre den henover siden på æblet indtil alt skrællet er væk",
+        "label": 0,
+        "n_words": 28,
+        "id": 22
+    },
+    {
+        "prompt": "Hvis jeg skærer et æble over i to stykker og efterlader det på køkkenbordet",
+        "solution0": "så bliver det brunt efter et stykke tid uden at have været dækket.",
+        "solution1": "så bliver det rødt efter et stykke tid uden at have været dækket.",
+        "label": 0,
+        "n_words": 27,
+        "id": 23
+    },
+    {
+        "prompt": "Hvis der kommer vand på dine skabslåger og de får lov til at tørre, vil de med tiden",
+        "solution0": "blive skæve på grund af vandet.",
+        "solution1": "blive større på grund af vandet.",
+        "label": 0,
+        "n_words": 24,
+        "id": 24
+    },
+    {
+        "prompt": "Jeg har låst min cykel fast til en lygtepæl og mistet nøglen. Hvordan får jeg nemmest min cykel fri?",
+        "solution0": "Det nemmeste er, at bryde låset op",
+        "solution1": "Det nemmeste er, at løfte den henover pælen",
+        "label": 0,
+        "n_words": 26,
+        "id": 25
+    },
+    {
+        "prompt": "Når klokken slår midnat ved nytår, skal vi",
+        "solution0": "hoppe ned af vores stole og drikke masser af champagne .",
+        "solution1": "sætte os på vores stole og drikke masser af champagne.",
+        "label": 0,
+        "n_words": 19,
+        "id": 26
+    },
+    {
+        "prompt": "Hvis jeg sparker hårdt til en fodbold mens den er våd så",
+        "solution0": "flyver den langt væk",
+        "solution1": "rykker den sig ikke",
+        "label": 0,
+        "n_words": 16,
+        "id": 27
+    },
+    {
+        "prompt": "Hvis søen er frosset helt til med is",
+        "solution0": "kan jeg gå, løbe og skøjte på den",
+        "solution1": "kan jeg ikke bevæge mig på den uden at falde igennem",
+        "label": 0,
+        "n_words": 16,
+        "id": 28
+    },
+    {
+        "prompt": "Hvis jeg tager en kuglepen og holder fast i begge ender, hvad sker der hvis slidder med den ene hånd?",
+        "solution0": "Kuglepennen bliver hængende ca. vandret i luften",
+        "solution1": "Kuglepennen falder ned og hænger ca. lodret i luften",
+        "label": 0,
+        "n_words": 27,
+        "id": 29
+    },
+    {
+        "prompt": "Hvis man får en kæmpe vælgerlussing så",
+        "solution0": "Får man en rød kind. Det er aldrig en fed oplevelse.",
+        "solution1": "Får man færre stemmer. Det er aldrig en fed oplevelse.",
+        "label": 0,
+        "n_words": 18,
+        "id": 30
+    },
+    {
+        "prompt": "Hvis ens lommelygte går ud en sommernat så",
+        "solution0": "kan man stadig se",
+        "solution1": "kan man ikke se",
+        "label": 0,
+        "n_words": 12,
+        "id": 31
+    },
+    {
+        "prompt": "Københavns havn er",
+        "solution0": "ren nok til at bade i",
+        "solution1": "for beskidt til at bade i",
+        "label": 0,
+        "n_words": 9,
+        "id": 32
+    },
+    {
+        "prompt": "Til fester er der typisk øllene",
+        "solution0": "Carlsberg og Tuborg på bordene.",
+        "solution1": "Bud Light og Heineken på bordene.",
+        "label": 0,
+        "n_words": 11,
+        "id": 33
+    },
+    {
+        "prompt": "Hvilken drik serveres der typisk på julemarkeder?",
+        "solution0": "Gløgg",
+        "solution1": "Varm vin",
+        "label": 0,
+        "n_words": 8,
+        "id": 34
+    },
+    {
+        "prompt": "Rikke arbejder i kommunen. Hun har netop fået en forfremmelse, hun kan finde de fleste af sine ansættelsesbetingelser i sin",
+        "solution0": "overenskomst",
+        "solution1": "ansættelseskontrakt",
+        "label": 0,
+        "n_words": 21,
+        "id": 35
+    },
+    {
+        "prompt": "For mange mennesker er det",
+        "solution0": "meget normalt at være med i en fagforening.",
+        "solution1": "ikke så normalt at være med i en fagforening.",
+        "label": 0,
+        "n_words": 13,
+        "id": 36
+    },
+    {
+        "prompt": "Hvis man gerne vil købe billig alkohol, kører man typisk",
+        "solution0": "med bil over grænsen til Tyskland",
+        "solution1": "med bil over grænsen til Sverige",
+        "label": 0,
+        "n_words": 16,
+        "id": 37
+    },
+    {
+        "prompt": "Jeg så i vejrudsigten, at det bliver stiv kuling i dag, så det er",
+        "solution0": "dårligt cykelvejr",
+        "solution1": "perfekt cykelvejr!",
+        "label": 0,
+        "n_words": 16,
+        "id": 38
+    },
+    {
+        "prompt": "Der er 50 meter til den nærmeste bilvask, så",
+        "solution0": "jeg kører derhen",
+        "solution1": "jeg går derhen",
+        "label": 0,
+        "n_words": 12,
+        "id": 39
+    },
+    {
+        "prompt": "I går, efter jeg havde spist frokost, cyklede jeg lige en lille tur hjem fra Næstved til",
+        "solution0": "Ringsted",
+        "solution1": "Skagen",
+        "label": 0,
+        "n_words": 18,
+        "id": 40
+    },
+    {
+        "prompt": "Der er oprettet et nyt politisk parti, som passer perfekt til mine politiske holdninger,",
+        "solution0": "så jeg stemmer på dem til næste valg",
+        "solution1": "men jeg stemmer ikke på dem til næste valg, da det bare er en spildt stemme",
+        "label": 0,
+        "n_words": 22,
+        "id": 41
+    },
+    {
+        "prompt": "Han købte lige en kop kaffe hos",
+        "solution0": "Lagkagehuset på vejen derover",
+        "solution1": "Dunkin Donuts på vejen derover",
+        "label": 0,
+        "n_words": 11,
+        "id": 42
+    },
+    {
+        "prompt": "En fødsel på et hospital koster",
+        "solution0": "ingen penge, næsten uanset hvordan det går.",
+        "solution1": "mange penge, næsten uanset hvordan det går.",
+        "label": 0,
+        "n_words": 13,
+        "id": 43
+    },
+    {
+        "prompt": "Vi har en del forskellige former for offentlig transport: toge, busser, metroer og",
+        "solution0": "letbaner",
+        "solution1": "sporvogne",
+        "label": 0,
+        "n_words": 14,
+        "id": 44
+    },
+    {
+        "prompt": "Må man godt køre scooter på en cykelsti?",
+        "solution0": "Ja, det må man gerne",
+        "solution1": "Nej, det må man ikke",
+        "label": 0,
+        "n_words": 13,
+        "id": 45
+    },
+    {
+        "prompt": "Lotte sidder på en café med sin bærbar. Hun skal på det lille hus, så hun",
+        "solution0": "går på toilettet",
+        "solution1": "spørger lige en anden i caféen, om de kan holde øje med hendes bærbar",
+        "label": 0,
+        "n_words": 19,
+        "id": 46
+    },
+    {
+        "prompt": "Brian går en tur og drikker en dåsesodavand. Når han er færdig med den, så",
+        "solution0": "stiller han den ved siden af en skraldespand og går videre.",
+        "solution1": "knuser han den og smider den i en skraldespand og går videre.",
+        "label": 0,
+        "n_words": 26,
+        "id": 47
+    },
+    {
+        "prompt": "Når det bliver vinter, så er der mange",
+        "solution0": "bilejere, som skal skifte dæk så at de ikke kommer galt afsted",
+        "solution1": "cykelejere, som skal skifte dæk så at de ikke kommer galt afsted",
+        "label": 0,
+        "n_words": 20,
+        "id": 48
+    },
+    {
+        "prompt": "I løbet af natten har det sneet en hel masse, så om morgenen efter at have set tv-avisen beslutter Hans sig for at",
+        "solution0": "tage toget på arbejde",
+        "solution1": "tage cyklen på arbejde",
+        "label": 0,
+        "n_words": 27,
+        "id": 49
+    },
+    {
+        "prompt": "Forældre skal typisk hente deres børn fra daginstitutionerne inden kl.",
+        "solution0": "17",
+        "solution1": "20",
+        "label": 0,
+        "n_words": 11,
+        "id": 50
+    },
+    {
+        "prompt": "Ude ved vestkysten er det typisk",
+        "solution0": "meget blæsende",
+        "solution1": "mildt og solrigt vejr",
+        "label": 0,
+        "n_words": 8,
+        "id": 51
+    },
+    {
+        "prompt": "Jeg tager fra København til Aarhus i morgen, og det passer lige med at jeg kan tage en lille frokostpause i",
+        "solution0": "Odense på vejen",
+        "solution1": "Aalborg på vejen",
+        "label": 0,
+        "n_words": 24,
+        "id": 52
+    },
+    {
+        "prompt": "Da hele familien skulle på den længe ventede sommerferie til Bornholm, så skulle de lige igennem",
+        "solution0": "Sverige",
+        "solution1": "Norge",
+        "label": 0,
+        "n_words": 17,
+        "id": 53
+    },
+    {
+        "prompt": "Til nytårsaften skal de fleste se",
+        "solution0": "90-årsfødselsdagen",
+        "solution1": "50-årsfødselsdagen",
+        "label": 0,
+        "n_words": 7,
+        "id": 54
+    },
+    {
+        "prompt": "Det er normalt at have",
+        "solution0": "5 ugers ferie om året",
+        "solution1": "3 ugers ferie om året",
+        "label": 0,
+        "n_words": 10,
+        "id": 55
+    },
+    {
+        "prompt": "At gå til tandlægen er",
+        "solution0": "dyrt",
+        "solution1": "gratis",
+        "label": 0,
+        "n_words": 6,
+        "id": 56
+    },
+    {
+        "prompt": "Det er",
+        "solution0": "ikke normalt at have badekar",
+        "solution1": "normalt at have badekar",
+        "label": 0,
+        "n_words": 7,
+        "id": 57
+    },
+    {
+        "prompt": "Han vandede sine altanplanter, men så blev hans",
+        "solution0": "underbo pludselig våd",
+        "solution1": "overbo pludselig våd",
+        "label": 0,
+        "n_words": 11,
+        "id": 58
+    },
+    {
+        "prompt": "Det kan være ret svært for folk i storbyerne at forstå folk fra",
+        "solution0": "Sønderjylland",
+        "solution1": "Sjælland",
+        "label": 0,
+        "n_words": 14,
+        "id": 59
+    },
+    {
+        "prompt": "Hun var advokat og var derfor ret velhavende, så selvfølgelig havde hun et sommerhus i",
+        "solution0": "Nordsjælland",
+        "solution1": "Vestsjælland",
+        "label": 0,
+        "n_words": 16,
+        "id": 60
+    },
+    {
+        "prompt": "Imens han var igang med at bygge den nye overdækkede altan tabte Jakob en hammer lige ned på sin storetå og ",
+        "solution0": "det gjorde virkelig ondt",
+        "solution1": "det gjorde slet ikke ondt",
+        "label": 0,
+        "n_words": 25,
+        "id": 62
+    },
+    {
+        "prompt": "Jens Peters hjemmelavet suppe er brandvarm, og derfor kan det være en rigtig god ide at vendte et par minutter for ikke at",
+        "solution0": "brænde sin tunge",
+        "solution1": "brænde sin hånd",
+        "label": 0,
+        "n_words": 26,
+        "id": 63
+    },
+    {
+        "prompt": "Amin kan godt lide at hinke på legepladsen, hvor han selv har tegnet en bane med kridt. Han mister nogle gange balancen, hvis han rammer",
+        "solution0": "sten på kridtbanen",
+        "solution1": "streger på kridtbanen",
+        "label": 0,
+        "n_words": 28,
+        "id": 64
+    },
+    {
+        "prompt": "Lasse var til sidste skoledag for at samle karameller, men da han fik en karamel i hovedet blev han",
+        "solution0": "meget ked af det fordi det gjorde ondt",
+        "solution1": "meget glad fordi det gjorde ondt",
+        "label": 0,
+        "n_words": 27,
+        "id": 65
+    },
+    {
+        "prompt": "Når børnene banker på døren til fastelavn synger de ‘fastelavn er mit navn ...’ og får en masse",
+        "solution0": "slik",
+        "solution1": "bank",
+        "label": 0,
+        "n_words": 19,
+        "id": 66
+    },
+    {
+        "prompt": "Hvis man ikke gætter, hvem der har lavet og sendt en gækkebrevet, så skal man give den person",
+        "solution0": "chokolade",
+        "solution1": "dadler",
+        "label": 0,
+        "n_words": 19,
+        "id": 67
+    },
+    {
+        "prompt": "Familien var på vej hjem fra et besøg hos bedstemor, da deres bil snittede en varevogn på en landevej, og det gjorde at de endte i",
+        "solution0": "grøften",
+        "solution1": "butikken",
+        "label": 0,
+        "n_words": 27,
+        "id": 68
+    },
+    {
+        "prompt": "Bukserne blev helt våde, da han blev bange, fordi han",
+        "solution0": "tissede i bukserne",
+        "solution1": "tissede i toilet",
+        "label": 0,
+        "n_words": 13,
+        "id": 69
+    },
+    {
+        "prompt": "Jeg har en ven, som jeg tænker må være ret stærk. Hun går ofte i fitness og hun kan løfte, hvad der svarer til",
+        "solution0": "et køleskab",
+        "solution1": "en æggebakke",
+        "label": 0,
+        "n_words": 26,
+        "id": 70
+    },
+    {
+        "prompt": "Aya og Andreas elsker at suse ned af bjerget på ski, men i dag gik det for hurtigt. Andreas vred om på knæet, da en af hans ski sad fast i",
+        "solution0": "sneen",
+        "solution1": "græsset",
+        "label": 0,
+        "n_words": 32,
+        "id": 71
+    },
+    {
+        "prompt": "For at vinen i glasset ikke bliver varm af ens hænder bør man holde på",
+        "solution0": "stilken",
+        "solution1": "glasset",
+        "label": 0,
+        "n_words": 16,
+        "id": 72
+    },
+    {
+        "prompt": "Lone sad på lærerværelset og drak sin kop kaffe, men i en pludselig armbevægelse ramte hun koppen, og den ramte jorden, hvor den",
+        "solution0": "gik i stykker",
+        "solution1": "gav et hop",
+        "label": 0,
+        "n_words": 26,
+        "id": 73
+    },
+    {
+        "prompt": "Et bildæk, fra en Mercedes er tungere end",
+        "solution0": "en skuetrækker",
+        "solution1": "et klaver",
+        "label": 0,
+        "n_words": 10,
+        "id": 74
+    },
+    {
+        "prompt": "Når jeg kører et tungt program på min computer, bliver den varm og begynder at",
+        "solution0": "blæse voldsomt. Jeg er nødt til at slukke programmet for at det stopper.",
+        "solution1": "ryste voldsomt. Jeg er nødt til at slukke programmet for at det stopper.",
+        "label": 0,
+        "n_words": 28,
+        "id": 75
+    },
+    {
+        "prompt": "Hun blev rasende, da hun tabte tenniskampen, så hun smadrede ketcheren i jorden gentagne gange og den blev helt skæv. Den kan",
+        "solution0": "ikke fikses",
+        "solution1": "sagtens fikses",
+        "label": 0,
+        "n_words": 24,
+        "id": 76
+    },
+    {
+        "prompt": "Hvis man sætter en gummiand i vand, så",
+        "solution0": "flyder den",
+        "solution1": "synker den",
+        "label": 0,
+        "n_words": 10,
+        "id": 77
+    },
+    {
+        "prompt": "Jeg har netop fået en Kay Boyesen abe, den kan",
+        "solution0": "hænge i armen",
+        "solution1": "sige lyde",
+        "label": 0,
+        "n_words": 13,
+        "id": 78
+    },
+    {
+        "prompt": "For at undgå at man kan falde ud, skal en studentervogn have",
+        "solution0": "høje gelænder. Der sker dog stadig næsten årligt på landsplan.",
+        "solution1": "lave gelænder. Der sker dog stadig næsten årligt på landsplan.",
+        "label": 0,
+        "n_words": 22,
+        "id": 79
+    },
+    {
+        "prompt": "Hvis man er til fest og gerne vil have at ens kolde øl smager godt",
+        "solution0": "er det vigtigt at den ikke er rystet, inden man åbner den.",
+        "solution1": "er det vigtigt at den er rystet, inden man åbner den.",
+        "label": 0,
+        "n_words": 27,
+        "id": 80
+    },
+    {
+        "prompt": "Hvis min mad er meget vandig, og jeg vil varme det i mikroovnen, skal jeg passe på, at det ikke overopheder, fordi det kan pludseligt",
+        "solution0": "eksplodere",
+        "solution1": "udtørre",
+        "label": 0,
+        "n_words": 26,
+        "id": 81
+    },
+    {
+        "prompt": "For at få det sidste aioli ud skal jeg",
+        "solution0": "ryste og banke kraftigt på plastikdutten",
+        "solution1": "ryste og banke blidt på plastikdutten",
+        "label": 0,
+        "n_words": 15,
+        "id": 82
+    },
+    {
+        "prompt": "Sana har købt knæklys til nytår. De begynder først at lyse efter at de",
+        "solution0": "er blevet knækket",
+        "solution1": "er blevet kolde",
+        "label": 0,
+        "n_words": 17,
+        "id": 83
+    },
+    {
+        "prompt": "Børnene må ikke lege med fyrværkeri, men de må lege med knaldperler. Når børnene kaster knaldperler ned i jorden, så",
+        "solution0": "siger de en høj lyd",
+        "solution1": "siger de ingen lyd",
+        "label": 0,
+        "n_words": 25,
+        "id": 84
+    },
+    {
+        "prompt": "En flok venner sidder ved et bord og de har hver især en fadbamse.",
+        "solution0": "De hygger sig og krammer fadbamsen.",
+        "solution1": "De hygger sig og skåler med fadbamsen.",
+        "label": 1,
+        "n_words": 20,
+        "id": 86
+    },
+    {
+        "prompt": "Det gik voldsomt for sig da børnene slog på fastelavnstønden. En efter en slog de på tønden med et bat. Pludselig faldt bunden ud og",
+        "solution0": "gulvet blev dækket med slik.",
+        "solution1": "gulvet blev dækket af vin.",
+        "label": 0,
+        "n_words": 30,
+        "id": 87
+    },
+    {
+        "prompt": "Hvis man beskriver en persons hår som at være kommunefarvet, så er hårfarven",
+        "solution0": "lysebrunt, men ikke helt blond.",
+        "solution1": "rødbrunt, men ikke helt blond",
+        "label": 0,
+        "n_words": 18,
+        "id": 88
+    },
+    {
+        "prompt": "Til et bryllup har brudeparrets tante skrevet en lang lejlighedssang på otte vers. Da det var tid til at synge, så",
+        "solution0": " sang tanten og ingen andre alle otte vers for brudeparret.",
+        "solution1": "sang tanten og mange af gæsterne alle otte vers for brudeparret.",
+        "label": 1,
+        "n_words": 31,
+        "id": 89
+    },
+    {
+        "prompt": "Mortensaften er en højtid man fejrer i november. Her mødes man om aftenen for at spise hvilket fjærkræ? ",
+        "solution0": " And fordi historien lyder noget om at det er for at hævne sig på gæs.",
+        "solution1": "Kalkun fordi historien lyder noget om at det er for at hævne sig på gæs.",
+        "label": 0,
+        "n_words": 33,
+        "id": 90
+    },
+    {
+        "prompt": "Mortensaften er en højtid man fejrer i november. Her mødes man om aftenen for at spise hvilket fjærkræ?",
+        "solution0": " And fordi historien lyder noget om at det er for at hævne sig på gæs.",
+        "solution1": "Kalkun fordi historien lyder noget om at det er for at hævne sig på gæs.",
+        "label": 0,
+        "n_words": 33,
+        "id": 91
+    },
+    {
+        "prompt": "En vennegruppe skriver sammen om en hård uge og aftaler at mødes sammen på lille-fredag. De mødes derfor",
+        "solution0": "torsdag aften efter arbejde.",
+        "solution1": "fredag aften efter arbejde.",
+        "label": 0,
+        "n_words": 22,
+        "id": 92
+    },
+    {
+        "prompt": "Jeg har fået en hjemmelavet pakkekalender af min bedstemor. Hun har pakket mange små gaver ind, så jeg kan åbne en gave hver dag før jul. Når jeg åbner den sidste pakke, så er det pakke nr.",
+        "solution0": "25, da julen fejres den 25. december.",
+        "solution1": "24, da julen fejres den 24. december.",
+        "label": 1,
+        "n_words": 44,
+        "id": 93
+    },
+    {
+        "prompt": "Når man fejrer j-dag, så drikker man",
+        "solution0": "julebryg",
+        "solution1": "juice.",
+        "label": 0,
+        "n_words": 8,
+        "id": 94
+    },
+    {
+        "prompt": "Hvordan fortsætter man normalt den følgende sætning: det man siger er man selv...",
+        "solution0": "for det afspejles af en selv.",
+        "solution1": "for det står i Aktuelt.",
+        "label": 1,
+        "n_words": 19,
+        "id": 95
+    },
+    {
+        "prompt": "Hvis jeg fortæller dig en om min ven Kasper som er taget på højskole i sommerferien og han er taget afsted alene. Er det så mest sandsynligt at",
+        "solution0": "han er en voksen.",
+        "solution1": "han er et barn.",
+        "label": 0,
+        "n_words": 32,
+        "id": 96
+    },
+    {
+        "prompt": "Jeg har arbejdet hårdt i min kolonihave, hvor jeg har bed med både grøntsager og smukke blomster. Når jeg bliver træt og vil sove, skal jeg dog",
+        "solution0": "først pakke værktøjet sammen og tage hjem.",
+        "solution1": "først pakke værktøjet sammen og rejse væk.",
+        "label": 0,
+        "n_words": 34,
+        "id": 97
+    },
+    {
+        "prompt": "Man bager fødselsdagsboller ved at først smelte smøret og hælde det i en skål. Derefter tilsætter man mælk og gæren samt sukker og salt. Det hele røres sammen med melet.",
+        "solution0": "Nu skal dejen hæve et lunt sted i ca. 45 min før dejen formes til boller.",
+        "solution1": "Nu skal dejen hæve et koldt sted i ca. 45 min før dejen formes til boller",
+        "label": 0,
+        "n_words": 46,
+        "id": 98
+    },
+    {
+        "prompt": "I dag skal vi fejrer en fødselsdag og der er derfor pyntet flot op med en masse fødselsdagsflag. Det pynter så flot med de",
+        "solution0": "rød-hvide flag.",
+        "solution1": "farverige flag.",
+        "label": 0,
+        "n_words": 26,
+        "id": 99
+    },
+    {
+        "prompt": "Jeg skal hente mit barn i børnehaven på vej hjem fra arbejde. Jeg henter derfor mit barn omkring klokken",
+        "solution0": "18.30.",
+        "solution1": "16.30",
+        "label": 1,
+        "n_words": 20,
+        "id": 100
+    },
+    {
+        "prompt": "En familie på fire skal ud og spise på restaurant. De ankommer til restauranten cirka kl. 22 og har ikke booket et bord. De får at vide at de ikke kan få et bord fordi",
+        "solution0": "de kommer for sent.",
+        "solution1": "de kommer for tidligt.",
+        "label": 0,
+        "n_words": 39,
+        "id": 101
+    },
+    {
+        "prompt": "Klokken er 22.00 og jeg har lige fundet ud af at jeg mangler en liter mælk. Jeg vil derfor hurtigt smutte ud til en butik. Da jeg ankommer til butikken ser jeg at",
+        "solution0": "butikken er åben.",
+        "solution1": "butikken er lukket.",
+        "label": 1,
+        "n_words": 36,
+        "id": 102
+    },
+    {
+        "prompt": "Hvis jeg bliver inviteret over til en middag, hvad tid skal jeg så dukke op?",
+        "solution0": "Omkring kl. 18.",
+        "solution1": "Omkring kl 12.",
+        "label": 0,
+        "n_words": 18,
+        "id": 103
+    },
+    {
+        "prompt": "Hvis man går forbi et hus med en masse dannebrogsflag, hvad er det normalt at tænke",
+        "solution0": "Nøj der er vist en som har fødselsdag.",
+        "solution1": "Nøj der er vist en som er nationalist.",
+        "label": 0,
+        "n_words": 24,
+        "id": 104
+    },
+    {
+        "prompt": "Når jeg er færdig med at drikke min øl, smider jeg den i",
+        "solution0": "skraldespanden, så den kan blive genbrugt.",
+        "solution1": "pantautomaten, så den kan blive genbrugt.",
+        "label": 1,
+        "n_words": 0,
+        "id": 105
+    },
+    {
+        "prompt": "Det er søndag eftermiddag og jeg vil gerne handle ind til aftensmad. Jeg går ned til det lokale supermarked og ser at",
+        "solution0": "supermarkedet er åbent.",
+        "solution1": "supermarkedet er lukket.",
+        "label": 0,
+        "n_words": 0,
+        "id": 106
+    },
+    {
+        "prompt": "Jeg har modtaget en pakke, og skal nu til at smide papkassen i genbrugscontaineren. Derfor",
+        "solution0": "flader jeg den ud, og smider den i containeren.",
+        "solution1": "lader jeg den være samlet, og smider den i containeren.",
+        "label": 0,
+        "n_words": 0,
+        "id": 107
+    },
+    {
+        "prompt": "Jeg tager smøret ud af køleskabet for at smøre på en blød bolle. Smøret er",
+        "solution0": "nemt at smøre ud.",
+        "solution1": "svært at smøre ud.",
+        "label": 1,
+        "n_words": 0,
+        "id": 108
+    },
+    {
+        "prompt": "Jeg skal have vasket min bil, men bilvasken er kun 100m nede af vejen, så jeg",
+        "solution0": "går ned til bilvasken.",
+        "solution1": "kører ned til bilvasken.",
+        "label": 1,
+        "n_words": 0,
+        "id": 109
+    }
+]

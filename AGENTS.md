@@ -12,6 +12,8 @@ Inspector recommendations are proposals, not automatic changes. Test suggested h
 ## Architecture and Provenance
 Input revisions identify dataset provenance, examples, references, sampling, templates, and overlays. Scoring, metrics, heuristics, and LLM inspector settings are editable suggestions, frozen separately into each run. Do not create input revisions for analysis-default edits. Record rendered prompts, model configuration, generation metadata, scores, diagnostic evidence, and inspector findings.
 
+Keep execution history in the execution database and model/evaluation definitions, including complete examples, in the definitions database. Version human-readable recipes and templates in `catalog/`; `scripts/build_definitions.py` downloads the HF examples and rebuilds the definitions database. Never commit bulk HF data or depend on unversioned external task code.
+
 Inspect AI can supply initial evaluation definitions, scoring functions, and metrics, and serve as one generation backend. Keep these roles independent and extensible.
 
 Cache generations by effective task and model configuration. Support model-grouped pending work, partial reruns, and durable resumes. Reuse generations for scoring-only changes; changed prompts or generation settings must change cache identity. Preserve attempts and reject stale worker writes.
