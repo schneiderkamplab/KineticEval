@@ -28,3 +28,22 @@ test('experiment preview requires explicit approval and edits invalidate the pre
  expect(approved).toBe(1)
  await page.screenshot({path:'test-results/experiment-approval.png',fullPage:true})
 })
+
+test('unsupported judge operations cannot be replaced with a parameter rerun',async({page})=>{
+ const proposal={kind:'experiment',title:'Shuffle choices',rationale:'Test positional bias',patch:{steps:[{name:'shuffle'}]}}
+ await page.route('**/api/**',async route=>{
+  const path=new URL(route.request().url()).pathname
+  let data:any=[]
+  if(path==='/api/experiment-proposals')data=[{id:'unsupported',status:'pending',proposal}]
+  if(path==='/api/proposals/unsupported/experiment')data={proposal,status:'pending',baseline_id:'base',blocked:true,
+   plan:{model:'fixture',example_ids:['one'],arms:[]},models:[{name:'fixture'}],warnings:['Unsupported experiment operations: steps'],scope_note:'Review scope'}
+  await route.fulfill({json:data})
+ })
+ await page.goto('/')
+ await page.getByRole('button',{name:'Experiments',exact:true}).click()
+ await page.getByRole('button',{name:'Configure experiment unsuppor'}).click()
+ await expect(page.getByText(/Blocked: this recommendation/)).toBeVisible()
+ await page.getByLabel('Experiment arms').fill(JSON.stringify([{name:'larger',parameters:{max_tokens:128}}]))
+ await expect(page.getByRole('button',{name:'Save approval preview'})).toBeDisabled()
+ await expect(page.getByRole('button',{name:'Approve and queue follow-up runs'})).toHaveCount(0)
+})

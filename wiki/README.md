@@ -5,3 +5,5 @@
 See [AGENTS.md](../AGENTS.md) for contributor principles and [README.md](../README.md) for setup and operational commands. Versioned wiki records distinguish measured results, judge findings, and planned work; later progress should not be silently backdated into an earlier snapshot.
 
 - [Follow-up approval workflow](Follow-up-approval.md): subsequent implementation update, prepared Gemma approval, and completed MMLU baseline scores.
+
+- Judge protocol fingerprinting and rejection of unsupported/no-op experiments were added on 5 November 2026; see the corresponding section in the [operational README](../README.md#experiment-validation-and-judge-cache-provenance). The previously approved Mimir shuffling follow-up is marked blocked, with historical outputs retained.

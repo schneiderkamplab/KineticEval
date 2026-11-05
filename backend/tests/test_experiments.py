@@ -121,3 +121,42 @@ def test_local_worker_handles_parameter_arms_with_same_weights(tmp_path,monkeypa
     assert observed==[64,128]
     with service.db.session() as s:
         assert s.scalar(select(func.count()).select_from(Job).where(Job.kind=='generation',Job.status=='failed'))==0
+
+
+@pytest.mark.parametrize('patch',[
+    {'steps':[{'name':'shuffle','settings':{'choice_order':'random'}}]},
+    {'proposed_settings':{'model':'fixture'},'transform':'rotate'},
+    {'proposed_settings':{'model':'fixture','arms':[{'name':'shuffle','choice_order':'random'}]}},
+    {'proposed_settings':{'model':'fixture','choice_order':'random'}},
+    {'proposed_settings':{'model':'fixture'}},
+])
+def test_unsupported_or_unchanged_proposals_cannot_be_prepared(tmp_path,patch):
+    service,_=setup(tmp_path)
+    with service.db.session() as s:
+        p=s.get(Proposal,'proposal');p.proposal={**p.proposal,'patch':patch}
+    assert experiments.seed(service,'proposal')['blocked'] is True
+    before=counts(service)
+    # A crafted direct API request with a valid parameter change cannot hide unsupported operations.
+    with pytest.raises(ValueError):
+        experiments.prepare(service,'proposal',{'model':'fixture','example_ids':['capital'],
+            'arms':[{'name':'unchanged'}]})
+    assert counts(service)==before
+
+
+def test_approval_revalidates_legacy_preview(tmp_path):
+    service,_=setup(tmp_path)
+    draft=experiments.prepare(service,'proposal',experiments.seed(service,'proposal')['plan'])
+    with service.db.session() as s:
+        p=s.get(Proposal,'proposal');p.proposal={**p.proposal,'patch':{'steps':[{'name':'shuffle'}]}}
+    before=counts(service)
+    with pytest.raises(ValueError,match='Unsupported experiment operations'):
+        experiments.approve(service,draft['id'])
+    assert counts(service)==before
+
+
+def test_noop_with_explicit_identical_values_is_rejected_but_cached_changes_are_valid(tmp_path):
+    service,_=setup(tmp_path)
+    plan=experiments.seed(service,'proposal')['plan']
+    plan['arms']=[{'name':'renamed','parameters':{'max_tokens':64,'temperature':0,'top_p':1},'chat_template_kwargs':{'enable_thinking':False}}]
+    with pytest.raises(ValueError,match='no effective change'):
+        experiments.prepare(service,'proposal',plan)

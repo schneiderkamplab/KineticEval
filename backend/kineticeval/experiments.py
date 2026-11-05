@@ -54,34 +54,93 @@ class Plan(BaseModel):
         return self
 
 
+class SupportedSettings(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    model: str = Field(min_length=1)
+    revision: str | None = None
+    dtype: str | None = None
+    parameters: dict[str, Any] = Field(default_factory=dict)
+    chat_template_kwargs: dict[str, Any] = Field(default_factory=dict)
+    arms: list[dict[str, Any]] | None = None
+    prompt_template: str | None = None
+
+
+def executable_arms(proposal):
+    """Fail closed: prose-only steps and unknown transformations are not executable."""
+    patch = proposal['patch']
+    allowed = {'proposed_settings','hypothesis','hypotheses','experiment','comparison_protocol','advisory','auto_apply','kind'}
+    unsupported = set(patch) - allowed
+    if unsupported:
+        raise ValueError('Unsupported experiment operations: ' + ', '.join(sorted(unsupported)))
+    if 'proposed_settings' not in patch:
+        raise ValueError('Proposal has no structured executable settings; analysis steps cannot be replaced with an unchanged rerun')
+    settings = SupportedSettings.model_validate(patch['proposed_settings'])
+    Arm(name='settings', parameters=settings.parameters, chat_template_kwargs=settings.chat_template_kwargs,
+        prompt_template=settings.prompt_template)
+    raw_arms = settings.arms if settings.arms is not None else [{'name':'follow-up'}]
+    if not raw_arms:
+        raise ValueError('Proposal has no executable arms')
+    arms=[]
+    for raw in raw_arms:
+        raw=dict(raw)
+        parameters={**settings.parameters, **raw.pop('parameters', {})}
+        for key in ('max_tokens','temperature','top_p','seed'):
+            if key in raw:parameters[key]=raw.pop(key)
+        raw['parameters']=parameters
+        raw['chat_template_kwargs']={**settings.chat_template_kwargs, **raw.get('chat_template_kwargs', {})}
+        if settings.prompt_template is not None:raw.setdefault('prompt_template',settings.prompt_template)
+        arms.append(Arm.model_validate(raw).model_dump(exclude_none=True))
+    return settings, arms
+
+
+def validate_effective_change(plan, base_model, definition):
+    rows = [r for r in materialize(definition) if r['id'] in set(plan.example_ids)]
+    for arm in plan.arms:
+        parameters={**base_model['parameters'], **arm.parameters}
+        kwargs={**base_model.get('chat_template_kwargs', {}), **arm.chat_template_kwargs}
+        defaults = {'max_tokens':64, 'temperature':0, 'top_p':1, 'seed':None}
+        before = {**defaults, **base_model['parameters']}
+        after = {**defaults, **parameters}
+        if after != before or kwargs != base_model.get('chat_template_kwargs', {}):
+            return
+        if arm.prompt_template is not None:
+            amended={**definition,'prompt_template':arm.prompt_template}
+            if any(render(amended,row)!=render(definition,row) for row in rows):return
+    raise ValueError('Experiment makes no effective change to baseline inputs or generation settings; existing-result analysis does not require a follow-up run')
+
+
+def validate_proposal_plan(proposal, plan, base_model, definition):
+    settings, _ = executable_arms(proposal)
+    if settings.model != plan.model:
+        raise ValueError('Model must match the judge proposal')
+    if settings.revision is not None and settings.revision != base_model.get('revision'):
+        raise ValueError('Proposed model revision differs from the pinned baseline')
+    if settings.dtype is not None and settings.dtype != base_model.get('dtype'):
+        raise ValueError('Proposed dtype differs from the pinned baseline')
+    validate_effective_change(plan,base_model,definition)
+
+
 def seed(service, proposal_id):
     with service.db.session() as s:
         proposal = require(s, Proposal, proposal_id)
         baseline = require(s, Run, proposal.run_id)
         if proposal.proposal['kind'] != 'experiment':
             raise ValueError('Select an experiment proposal')
-        patch = proposal.proposal['patch']
-        settings = patch.get('proposed_settings', {})
-        model = settings.get('model', '')
+        model = ''
         arms, warnings = [], []
-        if 'transform' in patch:
-            warnings.append('This proposal requires a data transformation. This editor supports generation settings and prompt templates only; no transformation has been applied.')
-        else:
-            for raw in settings.get('arms', [{'name':'follow-up', 'parameters': settings.get('parameters', {}),
-                                               'chat_template_kwargs': settings.get('chat_template_kwargs', {})}]):
-                allowed = {'name','parameters','chat_template_kwargs','prompt_template','max_tokens','temperature','top_p','seed'}
-                if set(raw) - allowed:
-                    warnings.append('An arm contains unsupported fields; configure supported arms explicitly.')
-                    arms = []
-                    break
-                arm = {'name':raw.get('name','follow-up'),
-                    'parameters':{**settings.get('parameters', {}), **raw.get('parameters', {}),
-                        **{k:raw[k] for k in ('max_tokens','temperature','top_p','seed') if k in raw}},
-                    'chat_template_kwargs':{**settings.get('chat_template_kwargs', {}), **raw.get('chat_template_kwargs', {})}}
-                if 'prompt_template' in raw: arm['prompt_template'] = raw['prompt_template']
-                arms.append(arm)
+        blocked = False
+        try:
+            settings, arms = executable_arms(proposal.proposal)
+            model = settings.model
+            base_model = next((m for m in baseline.config['models'] if m['name']==model), None)
+            if base_model is None:raise ValueError('Proposed model is not in the baseline')
+            definition = require(s, Revision, baseline.revision_id).definition
+            validate_proposal_plan(proposal.proposal, Plan(model=model,example_ids=baseline.manifest['ids'],arms=arms),base_model,definition)
+        except ValueError as exc:
+            blocked = True
+            warnings.append(str(exc))
         return {'proposal': proposal.proposal, 'baseline_id':baseline.id, 'status':proposal.status,
-            'models': baseline.config['models'], 'warnings':warnings,
+            'models': baseline.config['models'], 'warnings':warnings, 'blocked':blocked,
             'plan':{'model':model,'example_ids':baseline.manifest['ids'], 'arms':arms},
             'scope_note':'Defaults to all examples in the baseline run. Judge example_ids are evidence citations, not an executable sampling instruction. Review the scope against the proposed protocol.'}
 
@@ -99,6 +158,7 @@ def prepare(service, proposal_id, body):
         if base_model is None:
             raise ValueError('Select a model from the baseline run')
         old = require(s, Revision, baseline.revision_id)
+        validate_proposal_plan(proposal.proposal,plan,base_model,old.definition)
         previews = []
         for arm in plan.arms:
             definition = copy.deepcopy(old.definition)
@@ -144,6 +204,9 @@ def approve(service, experiment_id):
         if proposal.status != 'pending': raise ValueError('Proposal was already reviewed')
         baseline = require(s, Run, record.baseline_id)
         old = require(s, Revision, baseline.revision_id)
+        plan = Plan.model_validate(record.plan)
+        base_model = next(m for m in baseline.config['models'] if m['name']==plan.model)
+        validate_proposal_plan(proposal.proposal,plan,base_model,old.definition)
         runs = {}
         for arm in record.preview['arms']:
             revision_id = old.id

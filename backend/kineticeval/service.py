@@ -85,6 +85,20 @@ def render(definition, sample):
 
 
 def job_for(s, run_id, kind, payload, model=''):
+    if kind in {'judge', 'report', 'investigation'} and 'protocol' not in payload:
+        # Existing run jobs keep their pinned protocol, including legacy provenance.
+        # New runs always receive the current protocol and cannot hit legacy cache keys.
+        indexes = s.info.setdefault('judge_protocol_jobs', {})
+        index_key = (run_id, kind)
+        if index_key not in indexes:
+            candidates = s.scalars(select(Job).join(RunJob,RunJob.job_id==Job.id)
+                .where(RunJob.run_id==run_id, Job.kind==kind)).all()
+            indexes[index_key] = {identity({k:v for k,v in job.payload.items() if k!='protocol'}):job for job in candidates}
+        existing = indexes[index_key].get(identity(payload))
+        if existing is not None:
+            return existing
+        from .judge_protocol import protocol_for
+        payload = {**payload, 'protocol':protocol_for(payload,report=kind!='judge')}
     key = identity({'kind': kind, 'payload': payload, 'engine_version': '1'})
     job = s.get(Job, key)
     if job is None:
