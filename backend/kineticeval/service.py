@@ -248,6 +248,10 @@ class Service:
             elif action in {'resume', 'retry'}:
                 run.status = 'active'
                 if action == 'retry':
+                    jobs = s.scalars(select(Job).join(RunJob, RunJob.job_id == Job.id).where(RunJob.run_id == run_id)).all()
+                    known = {j.id for j in jobs}
+                    if job_ids and set(job_ids) - known:
+                        raise ValueError('Job does not belong to this run')
                     # A retry must not select a new cohort and spend the failure
                     # budget again. Preserve an explicitly capped selection.
                     if not run.audit or 'failure_review' not in run.audit:
@@ -260,10 +264,6 @@ class Service:
                         link = s.get(RunJob, (run.id, run.report_job))
                         if link: s.delete(link)
                         run.report_job = None
-                    jobs = s.scalars(select(Job).join(RunJob, RunJob.job_id == Job.id).where(RunJob.run_id == run_id)).all()
-                    known = {j.id for j in jobs}
-                    if job_ids and set(job_ids) - known:
-                        raise ValueError('Job does not belong to this run')
                     for job in jobs:
                         if job.status == 'failed' and (job_ids is None or job.id in job_ids):
                             job.status, job.error = 'pending', None

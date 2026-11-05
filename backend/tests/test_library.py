@@ -88,3 +88,28 @@ def test_result_retry_resumes_all_runs_sharing_failures_and_preserves_success(tm
     client=TestClient(create_app(tmp_path/'retry.db'))
     assert client.post('/api/results/'+result['id']+'/retry').json()['jobs_retried']==0
     assert client.post('/api/results/missing/retry').status_code==404
+
+
+def test_result_retry_accepts_failed_reports_and_metrics_before_detaching(tmp_path):
+    from kineticeval.db import Database, Job, Run, RunJob
+    from kineticeval.service import Service
+    from kineticeval.fixtures import demo_definition
+    from kineticeval.library import launch
+    path=tmp_path/'report-retry.db';db=Database(path);service=Service(db)
+    revision=service.create_evaluation(demo_definition())['revision_id']
+    result=launch(service,{'name':'Reports','launch_key':'reports','runs':[{'revision_id':revision,'models':[{'name':'fake','backend':'fake'}]}]})
+    rid=result['run_ids'][0]
+    with db.session() as s:
+        for kind in ['report','metrics']:
+            s.add(Job(id=kind,kind=kind,payload={},status='failed',error='temporary'))
+            s.add(RunJob(run_id=rid,job_id=kind))
+        run=s.get(Run,rid);run.report_job='report';run.metric_jobs={'fake':'metrics'}
+        run.status='completed_with_errors'
+    client=TestClient(create_app(path))
+    response=client.post('/api/results/'+result['id']+'/retry',json={})
+    assert response.status_code==200,response.text
+    assert response.json()['jobs_retried']==2
+    with db.session() as s:
+        assert s.get(Job,'report').status=='pending'
+        assert s.get(Job,'metrics').status=='pending'
+        assert s.get(Run,rid).status=='active'
