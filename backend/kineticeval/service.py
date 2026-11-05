@@ -333,13 +333,14 @@ class Service:
             'total_results': len(rows), 'included_results': len(rows[:200]), 'results': rows[:200],
             'note': 'Results truncated to first 200 when necessary. Audit is stratified, not a full independent rescore.'}
 
-    def evaluations(self):
+    def evaluations(self, summary=False):
         with self.db.session() as s:
             result = []
             for ev in s.scalars(select(Evaluation).order_by(Evaluation.created.desc())).all():
                 revisions = s.scalars(select(Revision).where(Revision.evaluation_id == ev.id).order_by(Revision.created.desc())).all()
                 result.append({'id': ev.id, 'name': ev.name, 'revisions': [{'id': r.id, 'parent_id': r.parent_id, 'created': r.created,
-                    'definition': r.definition} for r in revisions]})
+                    'definition': ({**{k:v for k,v in r.definition.items() if k != 'examples'},
+                        'example_count': len(r.definition['examples'])} if summary else r.definition)} for r in revisions]})
             return result
 
     def runs(self):

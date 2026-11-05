@@ -284,3 +284,15 @@ def test_concurrent_handlers_and_reproducible_audit(service):
         return {(r['example_id'],r['model']['name'],r['repeat']) for r in result['items'] if r['audited']}
     assert selected(first)==selected(second)
     assert all(len(service.attempts(row['generation']['id']))==1 for row in second['items'])
+
+
+def test_library_summary_omits_examples_and_revision_loads_on_demand(service):
+    rev, run = setup_run(service)
+    client = TestClient(create_app(str(service.db.engine.url.database)))
+    listing = client.get('/api/evaluations?summary=true').json()
+    summary = listing[0]['revisions'][0]['definition']
+    assert 'examples' not in summary
+    assert summary['example_count'] == 3
+    detail = client.get('/api/revisions/'+rev).json()
+    assert len(detail['examples']) == 3
+    assert len(client.get('/api/evaluations').json()[0]['revisions'][0]['definition']['examples']) == 3

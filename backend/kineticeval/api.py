@@ -4,6 +4,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field, ValidationError
 from .db import Database
 from .service import Service
@@ -13,6 +14,7 @@ from . import importers
 
 def create_app(db_path=None):
     app = FastAPI(title='KineticEval', version='0.1.0')
+    app.add_middleware(GZipMiddleware, minimum_size=1000, compresslevel=3)
     service = Service(Database(db_path or os.environ.get('KINETICEVAL_DB', 'kineticeval.db')))
     app.state.service = service
 
@@ -41,10 +43,17 @@ def create_app(db_path=None):
     def health(): return {'status': 'ok'}
 
     @app.get('/api/evaluations')
-    def evaluations(): return service.evaluations()
+    def evaluations(summary: bool = False): return service.evaluations(summary)
 
     @app.post('/api/evaluations')
     def create(definition: Definition): return service.create_evaluation(definition)
+
+    @app.get('/api/revisions/{revision_id}')
+    def revision(revision_id: str):
+        from .db import Revision
+        from .service import require
+        with service.db.session() as s:
+            return require(s, Revision, revision_id).definition
 
     @app.post('/api/revisions/{revision_id}')
     def revise(revision_id: str, patch: dict): return service.revise(revision_id, patch)
