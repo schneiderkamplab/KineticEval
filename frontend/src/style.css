@@ -21,3 +21,4 @@ input[type=radio]{width:auto;display:inline-block;margin-right:8px}
 .run-footer{border-top:1px solid #dce4df;padding-top:18px;display:flex;align-items:center;justify-content:space-between;gap:20px}.run-footer span,.run-footer small{display:block;color:#62716b;margin-top:5px}.run-footer small{font-size:12px}
 .run-error{color:#a32d30;background:#fff0ef;padding:10px;border-radius:6px;overflow-wrap:anywhere}
 @media(max-width:650px){.model-options{grid-template-columns:1fr}.run-footer{align-items:stretch;flex-direction:column}.run-context{padding:12px}}
+.stage-progress{margin:14px 0}.stage-progress>div{display:flex;justify-content:space-between;gap:20px}.stage-progress progress{width:100%;height:10px;accent-color:#34795b}.stage-progress small{color:#62716b}.progress-failed{color:#a32d30}.run-progress>p{overflow-wrap:anywhere}.run-progress.compact{min-width:240px;max-width:380px;font-size:12px}.run-progress.compact p{margin:8px 0}

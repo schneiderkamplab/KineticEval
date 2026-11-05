@@ -73,7 +73,11 @@ class Worker:
     async def compute(self, claim):
         payload = claim['payload']
         verify_components(payload)
-        if claim['kind'] == 'generation': result = await providers.generate(payload)
+        if claim['kind'] == 'generation':
+            if payload['model']['backend'] == 'hf':
+                result = await providers.generate(payload, progress=lambda phase: self.db.activity([claim], phase))
+            else:
+                result = await providers.generate(payload)
         elif claim['kind'] == 'scoring': result = await components.score(payload)
         elif claim['kind'] == 'metrics': result = components.aggregate(payload)
         elif claim['kind'] == 'diagnostic': result = components.diagnose(payload)

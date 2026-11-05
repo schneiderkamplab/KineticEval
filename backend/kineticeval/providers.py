@@ -35,7 +35,7 @@ class UCloud:
             return {'response': content, 'metadata': {'usage': data.get('usage'), 'model': data.get('model'), 'id': data.get('id')}}
 
 
-async def generate(payload):
+async def generate(payload, progress=None):
     model, messages = payload['model'], payload['messages']
     if model['backend'] == 'inspect':
         from .inspect_adapter import generate as inspect_generate
@@ -45,7 +45,14 @@ async def generate(payload):
     if model['backend'] == 'hf':
         import asyncio
         from .local_hf import cached_local_model
-        return (await asyncio.to_thread(lambda: cached_local_model(json.dumps(model, sort_keys=True)).generate_batch([payload])))[0]
+        def compute():
+            if progress:
+                progress('preparing_model')
+            engine = cached_local_model(json.dumps(model, sort_keys=True))
+            if progress:
+                progress('generating')
+            return engine.generate_batch([payload])[0]
+        return await asyncio.to_thread(compute)
     params = model['parameters']
     prompt = messages[-1]['content']
     response = params.get('responses', {}).get(prompt, params.get('response', 'A'))

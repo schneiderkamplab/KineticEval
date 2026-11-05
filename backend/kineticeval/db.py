@@ -78,6 +78,14 @@ class Job(Base):
     created: Mapped[float] = mapped_column(default=time.time)
 
 
+class JobActivity(Base):
+    __tablename__ = 'job_activities'
+    job_id: Mapped[str] = mapped_column(primary_key=True)
+    token: Mapped[str]
+    phase: Mapped[str]
+    updated: Mapped[float]
+
+
 class RunJob(Base):
     __tablename__ = 'run_jobs'
     run_id: Mapped[str] = mapped_column(primary_key=True)
@@ -174,6 +182,14 @@ class Database:
                 s.add(Attempt(id=token, job_id=job.id, started=now))
                 claims.append({'id': job.id, 'kind': job.kind, 'payload': job.payload, 'token': token})
             return claims
+
+    def activity(self, claims, phase):
+        with self.session(immediate=True) as s:
+            for claim in claims:
+                job = s.get(Job, claim['id'])
+                if not job or job.token != claim['token'] or job.status != 'running':
+                    continue
+                s.merge(JobActivity(job_id=job.id, token=job.token, phase=phase, updated=time.time()))
 
     def heartbeat(self, key, token, lease_seconds=300):
         from sqlalchemy import update

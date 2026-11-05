@@ -31,12 +31,14 @@ async def run(db, model_name, batch_size=16, memory_fraction=.20, watch=False):
             if spec['backend'] != 'hf':
                 raise ValueError('Local worker only accepts HF generation requests')
             if engine is None:
+                db.activity(claims, 'preparing_model')
                 engine = await asyncio.to_thread(LocalModel, spec, 'cuda:0', memory_fraction)
             if engine.spec != spec:
                 fixed = lambda value: {k:v for k,v in value.items() if k not in {'parameters', 'chat_template_kwargs'}}
                 if fixed(engine.spec) != fixed(spec):
                     raise ValueError('Weight or runtime configuration changed; start a separate worker')
                 engine.spec = spec
+            db.activity(claims, 'generating')
             outputs = await asyncio.to_thread(engine.generate_batch, [c['payload'] for c in claims])
             db.finish_many([{'id': claim['id'], 'token': claim['token'], 'result': output}
                 for claim, output in zip(claims, outputs)])

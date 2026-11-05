@@ -149,6 +149,11 @@ def create_app(db_path=None):
         from .providers import UCloud
         return await UCloud().models()
 
+    @app.get('/api/runs/{run_id}/progress')
+    def progress(run_id: str):
+        from .progress import snapshot
+        return snapshot(service.db, run_id)
+
     @app.get('/api/demo')
     def demo():
         from .fixtures import demo_definition
