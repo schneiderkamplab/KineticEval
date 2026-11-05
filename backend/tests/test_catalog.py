@@ -13,6 +13,8 @@ def test_export_and_rebuild_preserve_catalog_without_execution_data(tmp_path):
     saved=service.create_evaluation(definition.model_dump())
     service.name_revision(saved['revision_id'],'full')
     run=service.create_run({'revision_id':saved['revision_id'],'models':[{'name':'fixture','backend':'fake'}]})
+    from kineticeval.library import save_model, models
+    saved_model=save_model(db, {'name':'fixture model','spec':{'name':'fixture','backend':'fake','chat_template':None}})
     root=tmp_path/'catalog';export_catalog(db.definitions_path,root)
     assert not any('What is 2 + 2?' in p.read_text() for p in root.rglob('*.json'))
     output=tmp_path/'rebuilt.db';result=asyncio.run(build_catalog(root,output))
@@ -25,6 +27,7 @@ def test_export_and_rebuild_preserve_catalog_without_execution_data(tmp_path):
     restored=Service(Database(tmp_path/'fresh-execution.db',definitions_path=output))
     assert restored.evaluations()[0]['id']==saved['id']
     assert restored.runs()==[]
+    assert models(restored.db)==[saved_model]
     with pytest.raises(ValueError,match='Output already exists'):
         asyncio.run(build_catalog(root,output))
 

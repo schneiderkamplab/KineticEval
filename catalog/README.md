@@ -9,7 +9,7 @@ python -m pip install -e '.[catalog]'
 python scripts/build_definitions.py --output kineticeval.definitions.db
 ```
 
-The builder downloads datasets through Hugging Face (using its normal local cache), reconstructs the examples with the versioned task adapters, verifies their counts and content hashes, and populates SQLite. The database contains the complete examples selected by each dataset recipe, independently of a run's smoke/full sampler. Task-defined filtering and deduplication still apply: the current MMLU adapter produces 13,937 examples, HellaSwag 10,042, and WinoGrande 1,267. It does not download model weights or invoke an LLM.
+The builder downloads datasets through Hugging Face (using its normal local cache), reconstructs the examples with the versioned task adapters, verifies their counts and content hashes, and populates SQLite. The database contains the complete examples selected by each dataset recipe, independently of a run's smoke/full sampler. Task-defined filtering and deduplication still apply: the MMLU adapter produces 13,937 examples, HellaSwag 10,042, and WinoGrande 1,267. It does not download model weights or invoke an LLM.
 
 The manifest `catalog.json` lists the active files. `datasets/` holds reproducible loaders and expected hashes; `evaluations/` holds metadata and revisions; `models/` holds model configurations; `templates/` contains editable Jinja templates. Corrections live in revision overlays, preserving the downloaded baseline. Task adapters and custom scoring code must be committed in the Python package, or supplied by pinned dependencies; external working directories are not build dependencies. Local model paths remain machine-specific and must be configured before generation on another server.
 
@@ -34,3 +34,5 @@ python scripts/build_definitions.py --export-from kineticeval.definitions.db
 ```
 
 Before migration, export from `kineticeval.db` instead. Review the Git diff and rebuild to a separate output file before publishing. Inline datasets require an explicit versioned recipe; export fails instead of silently embedding their data. Rebuilding preserves catalog IDs, names, dates, overlays, templates, and suggested defaults; it does not invent new revisions.
+
+See [import coverage and compatibility gaps](IMPORTS.md) for the additional HRM comparison evaluations and model configurations.

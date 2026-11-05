@@ -1,0 +1,220 @@
+{
+  "models": [
+    {
+      "id": "a2f47e85e2934b5e99f401cccd7ccce5",
+      "name": "HRM-Text-1B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "ea2a8d8926d045d2a08dc5cd554c9498",
+      "name": "Mimir-v1 · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "c0d27145c6984995b696e6556e89f144",
+      "name": "Mimir-v1.5 · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "f2d8b73552384af68d5d69472125a5dc",
+      "name": "Qwen3.5-0.8B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "96757fb5148e431e9d593af1131a5ac7",
+      "name": "Qwen3.5-2B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "cb8a9d6ccbc04b4785d1b387db59d000",
+      "name": "Qwen3.5-4B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "425fd5ded0604b7594d791d04838a881",
+      "name": "Qwen3.5-9B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "150adf242d5e4a40ad12d0363ef76879",
+      "name": "Gemma-4-E2B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "8b77736cd8394eeca281ed0acdd312e0",
+      "name": "Gemma-4-E4B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "55e8f2f275294e0eb0a2afc8fec473a0",
+      "name": "Gemma-3-1B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "36d3482b032c436e95a369267f2510d6",
+      "name": "OLMo-2-1B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "7ceeb6f1b2df4bd78b370cfabe76c98f",
+      "name": "SmolLM3-3B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "2a423bbdbe0e456fbe8efeea29cb4bfd",
+      "name": "EuroLLM-9B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "e4f363ce9e014548becfbe617f0dcb8a",
+      "name": "Apertus-8B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "0ecbc2108ab145d3b1d6ae5f4fcb5a7a",
+      "name": "Ministral-3-8B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "8207bafdf2024c17a1e3b918b5cad9e2",
+      "name": "Munin-Apertus-8B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "84b022ecc69d448086661a9737cd0b4a",
+      "name": "Munin-Mistral-8B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "156592bd77824413999f0235ee7377d8",
+      "name": "Munin-Qwen-9B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/inference_perf_20260924/manifest.json"
+    },
+    {
+      "id": "8ab60d75e2414846aece681849fe70f7",
+      "name": "Gemma-4-E4B-thinking · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/followup_full_20260922/manifest.json"
+    },
+    {
+      "id": "1c1bf1e1be8346e09f50f2336c236dbf",
+      "name": "Ouro-1.4B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/ouro_full_20260925/manifest.json"
+    },
+    {
+      "id": "72346066aa514f9dac8e52396fe96391",
+      "name": "Ouro-2.6B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/ouro_full_20260925/manifest.json"
+    },
+    {
+      "id": "5f65f1d99b9442f4948b4a21b19f869f",
+      "name": "Ouro-1.4B-thinking · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/ouro_thinking_full_20260925/manifest.json"
+    },
+    {
+      "id": "f578698ac5e943ed813367e2d40ce7ea",
+      "name": "Ouro-2.6B-thinking · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/ouro_thinking_full_20260925/manifest.json"
+    },
+    {
+      "id": "9c290856831a4082a6f269df22245708",
+      "name": "Mimir-1650K · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "c4c39844e5624a8b806335e7681b8048",
+      "name": "Qwen3.5-0.8B · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "f20b360e53a34e6d9fa059ceb2d95ec8",
+      "name": "Qwen3.5-2B · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "fbc13b9f4e5e48c49635fdab9579a485",
+      "name": "Qwen3.5-4B · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "99db3095dfc04dea993a77816226f942",
+      "name": "Gemma-3-1B · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "66b59df2a777458bb23bdac37bb84f9f",
+      "name": "OLMo-2-1B · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "b475ec68ebce4dbc9cf3bd893e9d9ad8",
+      "name": "SmolLM3-3B · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "2e1cb03445b14ec1b52f86fdd2168f7f",
+      "name": "Munin-Apertus-8B · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "09811d597c7f4959ab4ef35a059a0355",
+      "name": "Munin-Mistral-8B · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "ad683f77d16b4f8c9195951aaf0b3c9b",
+      "name": "Munin-Qwen-9B · raw comparison · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/runs/hellaswag_da_letter_only_comparison_20260922/manifest.json"
+    },
+    {
+      "id": "6303330f8ce94a0caac855c925c97e96",
+      "name": "Llama-3.2-3B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-Text/evaluation/README.md"
+    },
+    {
+      "id": "a35be1b6f00e4ab6ad97b5e15d6cd818",
+      "name": "Olmo-3-1025-7B · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-Text/evaluation/README.md"
+    },
+    {
+      "id": "a38b58b65c8d4cf0b8cb43a0cbe919dc",
+      "name": "HRM-Text-1B · source CoT template · HRM comparison",
+      "note": "Suggested generation settings; source weights pinned where available. Local paths require the original export.",
+      "source": "HRM-test/hrm_cot_chat.jinja"
+    }
+  ]
+}

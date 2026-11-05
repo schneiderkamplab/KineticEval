@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.1774447,
+  "id": "f578698ac5e943ed813367e2d40ce7ea",
+  "name": "Ouro-2.6B-thinking · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template": null,
+    "chat_template_kwargs": {
+      "enable_thinking": true
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "ByteDance/Ouro-2.6B-Thinking",
+    "parameters": {
+      "max_tokens": 2048,
+      "temperature": 0
+    },
+    "revision": "f1edd81e7ac41355db670500ceaf204e0f73af68"
+  },
+  "updated": 1793875596.177459
+}

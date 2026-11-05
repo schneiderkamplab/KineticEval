@@ -1,0 +1,8 @@
+{
+  "examples_sha256": "8d05445b7126f52a217caff1dab722d88315ef325a23bd49873f6a3ee1adbae6",
+  "expected_count": 2376,
+  "factory": "inspect_evals.arc:arc_easy",
+  "kind": "inspect",
+  "kwargs": {},
+  "limit": 100000
+}

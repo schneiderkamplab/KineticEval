@@ -1,0 +1,26 @@
+{
+  "created": 1793875595.5950315,
+  "id": "cb8a9d6ccbc04b4785d1b387db59d000",
+  "name": "Qwen3.5-4B · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template": null,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "Qwen/Qwen3.5-4B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "851bf6e806efd8d0a36b00ddf55e13ccb7b8cd0a"
+  },
+  "updated": 1793875595.595041
+}

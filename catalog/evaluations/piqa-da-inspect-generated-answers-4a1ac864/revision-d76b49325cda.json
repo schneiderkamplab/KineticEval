@@ -1,0 +1,165 @@
+{
+  "created": 1793875551.8814263,
+  "dataset": "piqa-18e8de8a",
+  "definition": {
+    "description": "Generated-answer task imported from the HRM comparison task inventory. Original Inspect solver prompts, scorer, and metrics are retained.",
+    "expected_format": "none",
+    "generation_defaults": {},
+    "heuristics": [
+      {
+        "config": {},
+        "name": "qa",
+        "version": "1"
+      }
+    ],
+    "inspector": {
+      "audit_fraction": 0.1,
+      "audit_max": 100,
+      "audit_min": 10,
+      "enabled": false,
+      "endpoint": null,
+      "failure_inspector_limit": null,
+      "max_tokens": 2048,
+      "model": "",
+      "provider": "ucloud",
+      "seed": 42,
+      "version": "1"
+    },
+    "metrics": [
+      {
+        "config": {
+          "factory": "kineticeval.catalog_tasks.piqa:piqa",
+          "fingerprint": "43fc04d6de8a64b5f73f3e141197f55814f554c4928187a8b43b1647e3b8bec9",
+          "inspect_version": "0.3.287",
+          "kwargs": {},
+          "metric_names": [
+            "inspect_ai/accuracy"
+          ],
+          "metric_specs": [
+            {
+              "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+              "module": "inspect_ai.scorer._metrics.accuracy",
+              "name": "inspect_ai/accuracy",
+              "params": {}
+            }
+          ],
+          "scorer_spec": {
+            "code_hash": "43fc04d6de8a64b5f73f3e141197f55814f554c4928187a8b43b1647e3b8bec9",
+            "module": "kineticeval.catalog_tasks.piqa",
+            "name": "kineticeval/piqa_scorer",
+            "params": {}
+          },
+          "solver_specs": [
+            {
+              "name": "inspect_ai/generate",
+              "params": {
+                "max_tokens": 8
+              }
+            }
+          ]
+        },
+        "name": "inspect",
+        "version": "1"
+      }
+    ],
+    "name": "PIQA-da · Inspect generated answers",
+    "overlays": {},
+    "prompt_template": "{input}",
+    "sampler": {
+      "limit": null,
+      "seed": 42,
+      "subsets": []
+    },
+    "scorer": {
+      "config": {
+        "factory": "kineticeval.catalog_tasks.piqa:piqa",
+        "fingerprint": "43fc04d6de8a64b5f73f3e141197f55814f554c4928187a8b43b1647e3b8bec9",
+        "inspect_version": "0.3.287",
+        "kwargs": {},
+        "metric_names": [
+          "inspect_ai/accuracy"
+        ],
+        "metric_specs": [
+          {
+            "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+            "module": "inspect_ai.scorer._metrics.accuracy",
+            "name": "inspect_ai/accuracy",
+            "params": {}
+          }
+        ],
+        "scorer_spec": {
+          "code_hash": "43fc04d6de8a64b5f73f3e141197f55814f554c4928187a8b43b1647e3b8bec9",
+          "module": "kineticeval.catalog_tasks.piqa",
+          "name": "kineticeval/piqa_scorer",
+          "params": {}
+        },
+        "solver_specs": [
+          {
+            "name": "inspect_ai/generate",
+            "params": {
+              "max_tokens": 8
+            }
+          }
+        ]
+      },
+      "name": "inspect",
+      "version": "1"
+    },
+    "source": {
+      "catalog_origin": {
+        "inventory": "HRM comparison task inventory",
+        "repositories": [
+          "HRM-Text",
+          "HRM-test"
+        ]
+      },
+      "factory": "kineticeval.catalog_tasks.piqa:piqa",
+      "fingerprint": "43fc04d6de8a64b5f73f3e141197f55814f554c4928187a8b43b1647e3b8bec9",
+      "generation_config": {
+        "max_tokens": 8
+      },
+      "inspect_version": "0.3.287",
+      "kind": "inspect",
+      "kwargs": {},
+      "limit": 100000,
+      "metric_names": [
+        "inspect_ai/accuracy"
+      ],
+      "metric_specs": [
+        {
+          "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+          "module": "inspect_ai.scorer._metrics.accuracy",
+          "name": "inspect_ai/accuracy",
+          "params": {}
+        }
+      ],
+      "scorer_spec": {
+        "code_hash": "43fc04d6de8a64b5f73f3e141197f55814f554c4928187a8b43b1647e3b8bec9",
+        "module": "kineticeval.catalog_tasks.piqa",
+        "name": "kineticeval/piqa_scorer",
+        "params": {}
+      },
+      "solver": [
+        {
+          "name": "inspect_ai/generate",
+          "params": {
+            "max_tokens": 8
+          }
+        }
+      ],
+      "solver_specs": [
+        {
+          "name": "inspect_ai/generate",
+          "params": {
+            "max_tokens": 8
+          }
+        }
+      ]
+    },
+    "system_prompt": ""
+  },
+  "evaluation_id": "4a1ac8641a444d2384399d50eed6ebf5",
+  "id": "d76b49325cda4dd0a02192748af1095d",
+  "label": "full",
+  "parent_id": null
+}

@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.204106,
+  "id": "b475ec68ebce4dbc9cf3bd893e9d9ad8",
+  "name": "SmolLM3-3B · raw comparison · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "HuggingFaceTB/SmolLM3-3B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "a07cc9a04f16550a088caea529712d1d335b0ac1"
+  },
+  "template_file": "templates/b475ec68ebce4dbc9cf3bd893e9d9ad8.jinja",
+  "updated": 1793875596.2041135
+}

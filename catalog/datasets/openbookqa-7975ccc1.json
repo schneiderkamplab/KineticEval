@@ -1,0 +1,10 @@
+{
+  "examples_sha256": "492ead45443ce6a2e440270ee756670ae1171f58555597f96b20ef9387424308",
+  "expected_count": 500,
+  "factory": "kineticeval.catalog_tasks.mc9:openbookqa",
+  "kind": "inspect",
+  "kwargs": {
+    "shuffle": false
+  },
+  "limit": 100000
+}

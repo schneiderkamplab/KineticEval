@@ -1,0 +1,26 @@
+{
+  "created": 1793875595.6311347,
+  "id": "0ecbc2108ab145d3b1d6ae5f4fcb5a7a",
+  "name": "Ministral-3-8B · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template": null,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "mistralai/Ministral-3-8B-Instruct-2512-BF16",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "f6fae9795746f63c9be8344932f01275f3c63734"
+  },
+  "updated": 1793875595.6311421
+}

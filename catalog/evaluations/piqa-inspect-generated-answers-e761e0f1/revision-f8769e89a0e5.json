@@ -1,0 +1,184 @@
+{
+  "created": 1793875546.4119134,
+  "dataset": "piqa-9d556fd2",
+  "definition": {
+    "description": "Generated-answer task imported from the HRM comparison task inventory. Original Inspect solver prompts, scorer, and metrics are retained.",
+    "expected_format": "none",
+    "generation_defaults": {},
+    "heuristics": [
+      {
+        "config": {},
+        "name": "qa",
+        "version": "1"
+      }
+    ],
+    "inspector": {
+      "audit_fraction": 0.1,
+      "audit_max": 100,
+      "audit_min": 10,
+      "enabled": false,
+      "endpoint": null,
+      "failure_inspector_limit": null,
+      "max_tokens": 2048,
+      "model": "",
+      "provider": "ucloud",
+      "seed": 42,
+      "version": "1"
+    },
+    "metrics": [
+      {
+        "config": {
+          "factory": "inspect_evals.piqa:piqa",
+          "fingerprint": "3a8c1fdc49e059ba38cc26cc942b91652480552ea1409da9d1067f657fd6dd5e",
+          "inspect_version": "0.3.287",
+          "kwargs": {},
+          "metric_names": [
+            "inspect_ai/accuracy",
+            "inspect_ai/stderr"
+          ],
+          "metric_specs": [
+            {
+              "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+              "module": "inspect_ai.scorer._metrics.accuracy",
+              "name": "inspect_ai/accuracy",
+              "params": {}
+            },
+            {
+              "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+              "module": "inspect_ai.scorer._metrics.std",
+              "name": "inspect_ai/stderr",
+              "params": {}
+            }
+          ],
+          "scorer_spec": {
+            "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+            "module": "inspect_ai.scorer._choice",
+            "name": "inspect_ai/choice",
+            "params": {}
+          },
+          "solver_specs": [
+            {
+              "name": "inspect_ai/multiple_choice",
+              "params": {
+                "template": "The entire content of your response should be of the following format: 'ANSWER:\n$LETTER' (without quotes) where LETTER is one of {letters}.\n\nGiven either a question or a statement followed by two possible solutions\nlabelled A and B, choose the most appropriate solution. If a question is given,\nthe solutions answer the question. If a statement is given, the solutions\nexplain how to achieve the statement.\n\n{question}\n\n{choices}"
+              }
+            }
+          ]
+        },
+        "name": "inspect",
+        "version": "1"
+      }
+    ],
+    "name": "PIQA · Inspect generated answers",
+    "overlays": {},
+    "prompt_template": "{input}",
+    "sampler": {
+      "limit": null,
+      "seed": 42,
+      "subsets": []
+    },
+    "scorer": {
+      "config": {
+        "factory": "inspect_evals.piqa:piqa",
+        "fingerprint": "3a8c1fdc49e059ba38cc26cc942b91652480552ea1409da9d1067f657fd6dd5e",
+        "inspect_version": "0.3.287",
+        "kwargs": {},
+        "metric_names": [
+          "inspect_ai/accuracy",
+          "inspect_ai/stderr"
+        ],
+        "metric_specs": [
+          {
+            "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+            "module": "inspect_ai.scorer._metrics.accuracy",
+            "name": "inspect_ai/accuracy",
+            "params": {}
+          },
+          {
+            "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+            "module": "inspect_ai.scorer._metrics.std",
+            "name": "inspect_ai/stderr",
+            "params": {}
+          }
+        ],
+        "scorer_spec": {
+          "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+          "module": "inspect_ai.scorer._choice",
+          "name": "inspect_ai/choice",
+          "params": {}
+        },
+        "solver_specs": [
+          {
+            "name": "inspect_ai/multiple_choice",
+            "params": {
+              "template": "The entire content of your response should be of the following format: 'ANSWER:\n$LETTER' (without quotes) where LETTER is one of {letters}.\n\nGiven either a question or a statement followed by two possible solutions\nlabelled A and B, choose the most appropriate solution. If a question is given,\nthe solutions answer the question. If a statement is given, the solutions\nexplain how to achieve the statement.\n\n{question}\n\n{choices}"
+            }
+          }
+        ]
+      },
+      "name": "inspect",
+      "version": "1"
+    },
+    "source": {
+      "catalog_origin": {
+        "inventory": "HRM comparison task inventory",
+        "repositories": [
+          "HRM-Text",
+          "HRM-test"
+        ]
+      },
+      "factory": "inspect_evals.piqa:piqa",
+      "fingerprint": "3a8c1fdc49e059ba38cc26cc942b91652480552ea1409da9d1067f657fd6dd5e",
+      "generation_config": {},
+      "inspect_version": "0.3.287",
+      "kind": "inspect",
+      "kwargs": {},
+      "limit": 100000,
+      "metric_names": [
+        "inspect_ai/accuracy",
+        "inspect_ai/stderr"
+      ],
+      "metric_specs": [
+        {
+          "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+          "module": "inspect_ai.scorer._metrics.accuracy",
+          "name": "inspect_ai/accuracy",
+          "params": {}
+        },
+        {
+          "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+          "module": "inspect_ai.scorer._metrics.std",
+          "name": "inspect_ai/stderr",
+          "params": {}
+        }
+      ],
+      "scorer_spec": {
+        "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+        "module": "inspect_ai.scorer._choice",
+        "name": "inspect_ai/choice",
+        "params": {}
+      },
+      "solver": [
+        {
+          "name": "inspect_ai/multiple_choice",
+          "params": {
+            "template": "The entire content of your response should be of the following format: 'ANSWER:\n$LETTER' (without quotes) where LETTER is one of {letters}.\n\nGiven either a question or a statement followed by two possible solutions\nlabelled A and B, choose the most appropriate solution. If a question is given,\nthe solutions answer the question. If a statement is given, the solutions\nexplain how to achieve the statement.\n\n{question}\n\n{choices}"
+          }
+        }
+      ],
+      "solver_specs": [
+        {
+          "name": "inspect_ai/multiple_choice",
+          "params": {
+            "template": "The entire content of your response should be of the following format: 'ANSWER:\n$LETTER' (without quotes) where LETTER is one of {letters}.\n\nGiven either a question or a statement followed by two possible solutions\nlabelled A and B, choose the most appropriate solution. If a question is given,\nthe solutions answer the question. If a statement is given, the solutions\nexplain how to achieve the statement.\n\n{question}\n\n{choices}"
+          }
+        }
+      ]
+    },
+    "system_prompt": ""
+  },
+  "evaluation_id": "e761e0f10fbe43d5982faaf036623adb",
+  "id": "f8769e89a0e549198621d904cf753194",
+  "label": "full",
+  "parent_id": null
+}

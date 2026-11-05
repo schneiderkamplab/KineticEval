@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.2078114,
+  "id": "2e1cb03445b14ec1b52f86fdd2168f7f",
+  "name": "Munin-Apertus-8B · raw comparison · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "danish-foundation-models/munin-apertus-8b",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "52a0820be2e8dc11a746644046f64834c67d666d"
+  },
+  "template_file": "templates/2e1cb03445b14ec1b52f86fdd2168f7f.jinja",
+  "updated": 1793875596.2078185
+}

@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.1849823,
+  "id": "c4c39844e5624a8b806335e7681b8048",
+  "name": "Qwen3.5-0.8B · raw comparison · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "Qwen/Qwen3.5-0.8B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "2fc06364715b967f1860aea9cf38778875588b17"
+  },
+  "template_file": "templates/c4c39844e5624a8b806335e7681b8048.jinja",
+  "updated": 1793875596.184992
+}

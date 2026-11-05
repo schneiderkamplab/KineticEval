@@ -1,0 +1,188 @@
+{
+  "created": 1793875543.6525888,
+  "dataset": "boolq-cd7ce192",
+  "definition": {
+    "description": "Generated-answer task imported from the HRM comparison task inventory. Original Inspect solver prompts, scorer, and metrics are retained.",
+    "expected_format": "none",
+    "generation_defaults": {},
+    "heuristics": [
+      {
+        "config": {},
+        "name": "qa",
+        "version": "1"
+      }
+    ],
+    "inspector": {
+      "audit_fraction": 0.1,
+      "audit_max": 100,
+      "audit_min": 10,
+      "enabled": false,
+      "endpoint": null,
+      "failure_inspector_limit": null,
+      "max_tokens": 2048,
+      "model": "",
+      "provider": "ucloud",
+      "seed": 42,
+      "version": "1"
+    },
+    "metrics": [
+      {
+        "config": {
+          "factory": "inspect_evals.boolq:boolq",
+          "fingerprint": "beba04e486fdf50c1dbd7a6c817c5a8164a262a25ed67f12f4908e515c42dc69",
+          "inspect_version": "0.3.287",
+          "kwargs": {
+            "shuffle": false
+          },
+          "metric_names": [
+            "inspect_ai/accuracy",
+            "inspect_ai/stderr"
+          ],
+          "metric_specs": [
+            {
+              "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+              "module": "inspect_ai.scorer._metrics.accuracy",
+              "name": "inspect_ai/accuracy",
+              "params": {}
+            },
+            {
+              "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+              "module": "inspect_ai.scorer._metrics.std",
+              "name": "inspect_ai/stderr",
+              "params": {}
+            }
+          ],
+          "scorer_spec": {
+            "code_hash": "7974ddb436917ac97f78304ae071eef75115783938358a0578f8d2e30abaae6b",
+            "module": "inspect_ai.scorer._pattern",
+            "name": "inspect_ai/pattern",
+            "params": {
+              "pattern": "\\A[\\W_]*(Yes|No)[\\W_]*\\Z"
+            }
+          },
+          "solver_specs": [
+            {
+              "name": "inspect_ai/generate",
+              "params": {}
+            }
+          ]
+        },
+        "name": "inspect",
+        "version": "1"
+      }
+    ],
+    "name": "BoolQ · Inspect generated answers",
+    "overlays": {},
+    "prompt_template": "{input}",
+    "sampler": {
+      "limit": null,
+      "seed": 42,
+      "subsets": []
+    },
+    "scorer": {
+      "config": {
+        "factory": "inspect_evals.boolq:boolq",
+        "fingerprint": "beba04e486fdf50c1dbd7a6c817c5a8164a262a25ed67f12f4908e515c42dc69",
+        "inspect_version": "0.3.287",
+        "kwargs": {
+          "shuffle": false
+        },
+        "metric_names": [
+          "inspect_ai/accuracy",
+          "inspect_ai/stderr"
+        ],
+        "metric_specs": [
+          {
+            "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+            "module": "inspect_ai.scorer._metrics.accuracy",
+            "name": "inspect_ai/accuracy",
+            "params": {}
+          },
+          {
+            "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+            "module": "inspect_ai.scorer._metrics.std",
+            "name": "inspect_ai/stderr",
+            "params": {}
+          }
+        ],
+        "scorer_spec": {
+          "code_hash": "7974ddb436917ac97f78304ae071eef75115783938358a0578f8d2e30abaae6b",
+          "module": "inspect_ai.scorer._pattern",
+          "name": "inspect_ai/pattern",
+          "params": {
+            "pattern": "\\A[\\W_]*(Yes|No)[\\W_]*\\Z"
+          }
+        },
+        "solver_specs": [
+          {
+            "name": "inspect_ai/generate",
+            "params": {}
+          }
+        ]
+      },
+      "name": "inspect",
+      "version": "1"
+    },
+    "source": {
+      "catalog_origin": {
+        "inventory": "HRM comparison task inventory",
+        "repositories": [
+          "HRM-Text",
+          "HRM-test"
+        ]
+      },
+      "factory": "inspect_evals.boolq:boolq",
+      "fingerprint": "beba04e486fdf50c1dbd7a6c817c5a8164a262a25ed67f12f4908e515c42dc69",
+      "generation_config": {},
+      "inspect_version": "0.3.287",
+      "kind": "inspect",
+      "kwargs": {
+        "shuffle": false
+      },
+      "limit": 100000,
+      "metric_names": [
+        "inspect_ai/accuracy",
+        "inspect_ai/stderr"
+      ],
+      "metric_specs": [
+        {
+          "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+          "module": "inspect_ai.scorer._metrics.accuracy",
+          "name": "inspect_ai/accuracy",
+          "params": {}
+        },
+        {
+          "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+          "module": "inspect_ai.scorer._metrics.std",
+          "name": "inspect_ai/stderr",
+          "params": {}
+        }
+      ],
+      "scorer_spec": {
+        "code_hash": "7974ddb436917ac97f78304ae071eef75115783938358a0578f8d2e30abaae6b",
+        "module": "inspect_ai.scorer._pattern",
+        "name": "inspect_ai/pattern",
+        "params": {
+          "pattern": "\\A[\\W_]*(Yes|No)[\\W_]*\\Z"
+        }
+      },
+      "solver": [
+        {
+          "name": "inspect_ai/generate",
+          "params": {}
+        }
+      ],
+      "solver_specs": [
+        {
+          "name": "inspect_ai/generate",
+          "params": {}
+        }
+      ]
+    },
+    "system_prompt": ""
+  },
+  "evaluation_id": "bf06575fb271497dbd061b56ff047e2a",
+  "id": "538f8c6a62b8457db796b7ffbf5ed4d4",
+  "label": "full",
+  "parent_id": null
+}

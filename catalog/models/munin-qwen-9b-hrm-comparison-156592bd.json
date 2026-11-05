@@ -1,0 +1,26 @@
+{
+  "created": 1793875595.6414485,
+  "id": "156592bd77824413999f0235ee7377d8",
+  "name": "Munin-Qwen-9B · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template": null,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "danish-foundation-models/munin-qwen3.5-9B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "6473722de94e3dda8eb99a3aeb57a5d2a5a2112c"
+  },
+  "updated": 1793875595.6414557
+}

@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.2120254,
+  "id": "09811d597c7f4959ab4ef35a059a0355",
+  "name": "Munin-Mistral-8B · raw comparison · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "danish-foundation-models/munin-ministral3-8B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "d7f8d5308dc2cf3a1f3585140fde90a90b372676"
+  },
+  "template_file": "templates/09811d597c7f4959ab4ef35a059a0355.jinja",
+  "updated": 1793875596.2120326
+}

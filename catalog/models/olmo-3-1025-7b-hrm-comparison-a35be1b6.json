@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.4476032,
+  "id": "a35be1b6f00e4ab6ad97b5e15d6cd818",
+  "name": "Olmo-3-1025-7B · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 3072,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "allenai/Olmo-3-1025-7B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "a81bae42db3975be1671e27b9c9a56da1a9f980f"
+  },
+  "template_file": "templates/a35be1b6f00e4ab6ad97b5e15d6cd818.jinja",
+  "updated": 1793875596.4476151
+}

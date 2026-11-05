@@ -1,0 +1,8 @@
+{
+  "examples_sha256": "cbe12476f4b565188c56ada297af39f9496482d6e81e396a67b5f3b07a8e7fa1",
+  "expected_count": 1319,
+  "factory": "inspect_evals.gsm8k:gsm8k",
+  "kind": "inspect",
+  "kwargs": {},
+  "limit": 100000
+}

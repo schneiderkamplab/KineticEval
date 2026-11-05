@@ -1,0 +1,10 @@
+{
+  "examples_sha256": "1529cc47575679fd0495867750250be1a2e6d829e16c60ab8f9e1e5cc15e4d75",
+  "expected_count": 12032,
+  "factory": "inspect_evals.mmlu_pro:mmlu_pro",
+  "kind": "inspect",
+  "kwargs": {
+    "shuffle": false
+  },
+  "limit": 100000
+}

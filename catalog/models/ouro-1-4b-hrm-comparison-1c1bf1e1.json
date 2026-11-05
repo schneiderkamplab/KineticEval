@@ -1,0 +1,26 @@
+{
+  "created": 1793875595.8137012,
+  "id": "1c1bf1e1be8346e09f50f2336c236dbf",
+  "name": "Ouro-1.4B · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template": null,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "ByteDance/Ouro-1.4B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "574fa66cb8bf5abdc979642d01cf2b79b16bfab1"
+  },
+  "updated": 1793875595.8137157
+}

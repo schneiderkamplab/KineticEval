@@ -1,0 +1,10 @@
+{
+  "examples_sha256": "a896f371211a152e89921e0e9a092070587730cd71079758a57abb0adc718839",
+  "expected_count": 1954,
+  "factory": "kineticeval.catalog_tasks.mc9:socialiqa",
+  "kind": "inspect",
+  "kwargs": {
+    "shuffle": false
+  },
+  "limit": 100000
+}

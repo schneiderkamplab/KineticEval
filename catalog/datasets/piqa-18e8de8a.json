@@ -1,0 +1,8 @@
+{
+  "examples_sha256": "f747e00b603f603ecd02e56fe3ffe32624d147fc66a64094fc37f8a1d2b06c2c",
+  "expected_count": 108,
+  "factory": "kineticeval.catalog_tasks.piqa:piqa",
+  "kind": "inspect",
+  "kwargs": {},
+  "limit": 100000
+}

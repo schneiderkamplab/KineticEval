@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.195546,
+  "id": "99db3095dfc04dea993a77816226f942",
+  "name": "Gemma-3-1B · raw comparison · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "google/gemma-3-1b-it",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "dcc83ea841ab6100d6b47a070329e1ba4cf78752"
+  },
+  "template_file": "templates/99db3095dfc04dea993a77816226f942.jinja",
+  "updated": 1793875596.1955538
+}

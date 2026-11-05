@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.1813402,
+  "id": "9c290856831a4082a6f269df22245708",
+  "name": "Mimir-1650K · raw comparison · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 4096,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": "/work/dfm/HRM-Text/exports/dfm8_XL_step1650000_ema_hf",
+    "model_identifier": null,
+    "name": "/work/dfm/HRM-Text/exports/dfm8_XL_step1650000_ema_hf",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": null
+  },
+  "template_file": "templates/9c290856831a4082a6f269df22245708.jinja",
+  "updated": 1793875596.1813507
+}

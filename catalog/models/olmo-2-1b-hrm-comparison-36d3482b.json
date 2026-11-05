@@ -1,0 +1,26 @@
+{
+  "created": 1793875595.6151822,
+  "id": "36d3482b032c436e95a369267f2510d6",
+  "name": "OLMo-2-1B · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template": null,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "allenai/OLMo-2-0425-1B-Instruct",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "48d788eca847d4d7548f375ad03d3c9312f6139e"
+  },
+  "updated": 1793875595.6151903
+}

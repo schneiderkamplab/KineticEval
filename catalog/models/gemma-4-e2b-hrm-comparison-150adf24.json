@@ -1,0 +1,26 @@
+{
+  "created": 1793875595.6048403,
+  "id": "150adf242d5e4a40ad12d0363ef76879",
+  "name": "Gemma-4-E2B · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template": null,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "google/gemma-4-E2B-it",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "3e22461f65e89153144f8adb70e3b8c2cc9845a7"
+  },
+  "updated": 1793875595.6048486
+}

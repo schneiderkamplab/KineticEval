@@ -1,0 +1,26 @@
+{
+  "created": 1793875595.6242487,
+  "id": "2a423bbdbe0e456fbe8efeea29cb4bfd",
+  "name": "EuroLLM-9B · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template": null,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "utter-project/EuroLLM-9B-Instruct",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "f7ae2bc3bcbb538c0b93fa6cfbf388d9898b1ace"
+  },
+  "updated": 1793875595.6242568
+}

@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.33172,
+  "id": "6303330f8ce94a0caac855c925c97e96",
+  "name": "Llama-3.2-3B · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 3072,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "unsloth/Llama-3.2-3B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "d4446454d87d51aa42e1fb174f25acc5f8762331"
+  },
+  "template_file": "templates/6303330f8ce94a0caac855c925c97e96.jinja",
+  "updated": 1793875596.3317325
+}

@@ -1,0 +1,10 @@
+{
+  "examples_sha256": "ed3fceeab1c4b5ff9342dce8328fdc65342be63a4404614544a1a959227058cc",
+  "expected_count": 3270,
+  "factory": "inspect_evals.boolq:boolq",
+  "kind": "inspect",
+  "kwargs": {
+    "shuffle": false
+  },
+  "limit": 100000
+}

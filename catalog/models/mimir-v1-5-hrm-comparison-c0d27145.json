@@ -1,0 +1,26 @@
+{
+  "created": 1793875595.5826657,
+  "id": "c0d27145c6984995b696e6556e89f144",
+  "name": "Mimir-v1.5 · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template": null,
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "danish-foundation-models/DFM-Mimir-v1.5",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "e1e5c21db62c7a790fd2d1ba929e54ee5abc8e57"
+  },
+  "updated": 1793875595.5826766
+}

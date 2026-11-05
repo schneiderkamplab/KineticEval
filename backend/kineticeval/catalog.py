@@ -51,7 +51,7 @@ def export_catalog(database, root):
             loader={'kind':'huggingface',**{k:source.get(k) for k in ('path','config','split','revision','limit','mapping')}}
         else:
             raise ValueError(f"Revision {row['id']} needs a versioned non-HF data recipe before export")
-        key=source.get('benchmark') or identity(loader)[:12]
+        key=source.get('benchmark') or re.sub(r'[^a-z0-9]+', '-', source.get('factory', source.get('path', 'dataset')).split(':')[-1].lower()).strip('-')+'-'+identity(loader)[:8]
         recipe={**loader,'expected_count':len(examples),'examples_sha256':identity(examples)}
         if key in recipes and recipes[key]!=recipe:
             key+='-'+identity(recipe)[:8]
@@ -62,8 +62,9 @@ def export_catalog(database, root):
     for row in evaluations:write_json(root/'evaluations'/folders[row['id']]/'evaluation.json',row)
     for row in models:
         row['spec']=json.loads(row['spec'])
-        template=row['spec'].pop('chat_template',None)
+        template=row['spec'].get('chat_template')
         if template is not None:
+            row['spec'].pop('chat_template')
             relative='templates/'+row['id']+'.jinja'
             path=root/relative;path.parent.mkdir(parents=True,exist_ok=True);path.write_text(template)
             row['template_file']=relative

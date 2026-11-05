@@ -1,0 +1,8 @@
+{
+  "examples_sha256": "4a9a3b3e7d1647af43d52164d89c4b67b02b9ed27cc5ab339c6735826790bf8a",
+  "expected_count": 1838,
+  "factory": "inspect_evals.piqa:piqa",
+  "kind": "inspect",
+  "kwargs": {},
+  "limit": 100000
+}

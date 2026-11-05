@@ -1,0 +1,176 @@
+{
+  "created": 1793875719.8052752,
+  "dataset": "arc-challenge-54a6e7bd",
+  "definition": {
+    "description": "Generated-answer task imported from the HRM comparison task inventory. Original Inspect solver prompts, scorer, and metrics are retained.",
+    "expected_format": "none",
+    "generation_defaults": {},
+    "heuristics": [
+      {
+        "config": {},
+        "name": "qa",
+        "version": "1"
+      }
+    ],
+    "inspector": {
+      "audit_fraction": 0.1,
+      "audit_max": 100,
+      "audit_min": 10,
+      "enabled": false,
+      "endpoint": null,
+      "failure_inspector_limit": null,
+      "max_tokens": 2048,
+      "model": "",
+      "provider": "ucloud",
+      "seed": 42,
+      "version": "1"
+    },
+    "metrics": [
+      {
+        "config": {
+          "factory": "inspect_evals.arc:arc_challenge",
+          "fingerprint": "3e19cb17381ea7db37a806f73c2ea1771110e298e6e7c3bbf947a73f47a0f460",
+          "inspect_version": "0.3.287",
+          "kwargs": {},
+          "metric_names": [
+            "inspect_ai/accuracy",
+            "inspect_ai/stderr"
+          ],
+          "metric_specs": [
+            {
+              "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+              "module": "inspect_ai.scorer._metrics.accuracy",
+              "name": "inspect_ai/accuracy",
+              "params": {}
+            },
+            {
+              "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+              "module": "inspect_ai.scorer._metrics.std",
+              "name": "inspect_ai/stderr",
+              "params": {}
+            }
+          ],
+          "scorer_spec": {
+            "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+            "module": "inspect_ai.scorer._choice",
+            "name": "inspect_ai/choice",
+            "params": {}
+          },
+          "solver_specs": [
+            {
+              "name": "inspect_ai/multiple_choice",
+              "params": {}
+            }
+          ]
+        },
+        "name": "inspect",
+        "version": "1"
+      }
+    ],
+    "name": "ARC-Challenge · Inspect generated answers",
+    "overlays": {},
+    "prompt_template": "{input}",
+    "sampler": {
+      "limit": 10,
+      "seed": 42,
+      "subsets": []
+    },
+    "scorer": {
+      "config": {
+        "factory": "inspect_evals.arc:arc_challenge",
+        "fingerprint": "3e19cb17381ea7db37a806f73c2ea1771110e298e6e7c3bbf947a73f47a0f460",
+        "inspect_version": "0.3.287",
+        "kwargs": {},
+        "metric_names": [
+          "inspect_ai/accuracy",
+          "inspect_ai/stderr"
+        ],
+        "metric_specs": [
+          {
+            "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+            "module": "inspect_ai.scorer._metrics.accuracy",
+            "name": "inspect_ai/accuracy",
+            "params": {}
+          },
+          {
+            "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+            "module": "inspect_ai.scorer._metrics.std",
+            "name": "inspect_ai/stderr",
+            "params": {}
+          }
+        ],
+        "scorer_spec": {
+          "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+          "module": "inspect_ai.scorer._choice",
+          "name": "inspect_ai/choice",
+          "params": {}
+        },
+        "solver_specs": [
+          {
+            "name": "inspect_ai/multiple_choice",
+            "params": {}
+          }
+        ]
+      },
+      "name": "inspect",
+      "version": "1"
+    },
+    "source": {
+      "catalog_origin": {
+        "inventory": "HRM comparison task inventory",
+        "repositories": [
+          "HRM-Text",
+          "HRM-test"
+        ]
+      },
+      "factory": "inspect_evals.arc:arc_challenge",
+      "fingerprint": "3e19cb17381ea7db37a806f73c2ea1771110e298e6e7c3bbf947a73f47a0f460",
+      "generation_config": {},
+      "inspect_version": "0.3.287",
+      "kind": "inspect",
+      "kwargs": {},
+      "limit": 100000,
+      "metric_names": [
+        "inspect_ai/accuracy",
+        "inspect_ai/stderr"
+      ],
+      "metric_specs": [
+        {
+          "code_hash": "b9793301c57b16dbd2cc1b7e8de8c80c9f6d5f18654737c9a4724bedab6f257d",
+          "module": "inspect_ai.scorer._metrics.accuracy",
+          "name": "inspect_ai/accuracy",
+          "params": {}
+        },
+        {
+          "code_hash": "e2d605ec523763dd2c3acbf11636f83fe537eda6daf66739e8d4b90dedd0dee3",
+          "module": "inspect_ai.scorer._metrics.std",
+          "name": "inspect_ai/stderr",
+          "params": {}
+        }
+      ],
+      "scorer_spec": {
+        "code_hash": "1dab1014dedd50fef6483bc4010c34d4224b2fd645f82946f915ced044a5d1b4",
+        "module": "inspect_ai.scorer._choice",
+        "name": "inspect_ai/choice",
+        "params": {}
+      },
+      "solver": [
+        {
+          "name": "inspect_ai/multiple_choice",
+          "params": {}
+        }
+      ],
+      "solver_specs": [
+        {
+          "name": "inspect_ai/multiple_choice",
+          "params": {}
+        }
+      ]
+    },
+    "system_prompt": ""
+  },
+  "evaluation_id": "cc81a95a88eb4c3ea048f84cd9cd041c",
+  "id": "2381f57038434c05806a6d087ec83bf4",
+  "label": "smoke",
+  "parent_id": "439ad01cdf904fccac73b2f86dc919ce"
+}

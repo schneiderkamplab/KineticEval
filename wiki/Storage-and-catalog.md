@@ -11,3 +11,5 @@ Migration explicitly moves the four catalog tables, preserving IDs. Both attache
 See [build, export, migration, and backup instructions](../catalog/README.md). Dashboard edits must be exported and committed to make a subsequent checkout reproduce them. Export currently rejects inline datasets without a versioned recipe.
 
 Further catalog expansion from HRM source repositories is under compatibility review: supported task imports can be added with their original scoring/protocol, while unsupported custom solvers, multiple-reference targets, sandboxes, and inaccessible datasets require explicit follow-up. No imported comparison should start generation automatically.
+
+The next catalog expansion added ten supported task definitions and 36 comparison model configurations, for 13 evaluations, 27 input revisions (including a ten-example smoke revision for each new evaluation), 42 model configurations, and 51,036 examples across 13 recipes. No runs were started. See [import coverage](../catalog/IMPORTS.md) for remaining source-specific adapters and access gaps.

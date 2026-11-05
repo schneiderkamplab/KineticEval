@@ -1,0 +1,26 @@
+{
+  "created": 1793875596.453705,
+  "id": "a38b58b65c8d4cf0b8cb43a0cbe919dc",
+  "name": "HRM-Text-1B · source CoT template · HRM comparison",
+  "spec": {
+    "artifact_hash": null,
+    "backend": "hf",
+    "chat_template_kwargs": {
+      "enable_thinking": false
+    },
+    "configuration_id": null,
+    "context_limit": 8192,
+    "dtype": "bfloat16",
+    "endpoint": null,
+    "local_path": null,
+    "model_identifier": null,
+    "name": "sapientinc/HRM-Text-1B",
+    "parameters": {
+      "max_tokens": 64,
+      "temperature": 0
+    },
+    "revision": "22097cbcecdd1301afe30a19a3ee61b96a9863e5"
+  },
+  "template_file": "templates/a38b58b65c8d4cf0b8cb43a0cbe919dc.jinja",
+  "updated": 1793875596.453715
+}
